@@ -30,9 +30,10 @@ impl GameState for State {
         ctx.cls();
 
         player_input(self, ctx);
+        self.run_systems();
 
-        let map = self.ecs.fetch::<Vec<Vec<TileType>>>();
-        draw_map(&map, ctx);
+        // let map = self.ecs.fetch::<Map>();
+        draw_map(&self.ecs, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
@@ -50,9 +51,10 @@ fn main() -> BError {
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
     gs.ecs.register::<Viewshed>();
+
     let map = Map::new_map(MAP_X, MAP_Y);
-    gs.ecs.insert(map.tiles);
     let (player_x, player_y) = map.rooms[0].center();
+    gs.ecs.insert(map);
     gs.ecs
         .create_entity()
         .with(Position {
@@ -74,10 +76,10 @@ fn main() -> BError {
 fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let mut positions = ecs.write_storage::<Position>();
     let mut players = ecs.write_storage::<Player>();
-    let map = ecs.fetch::<Vec<Vec<TileType>>>();
+    let map = ecs.fetch::<Map>();
 
     for (_player, pos) in (&mut players, &mut positions).join() {
-        match map[(pos.x + delta_x) as usize][(pos.y + delta_y) as usize] {
+        match map.tiles[(pos.x + delta_x) as usize][(pos.y + delta_y) as usize] {
             TileType::Wall => {}
             TileType::Floor => {
                 pos.x = min(79, max(0, pos.x + delta_x));

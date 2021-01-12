@@ -1,6 +1,7 @@
 use crate::constants::{BASE_BG_COLOR, GROUND_COLOR, MAP_X, MAP_Y, WALL_COLOR};
 use crate::rect::Rect;
 use bracket_lib::prelude::*;
+use specs::prelude::*;
 use std::cmp::{max, min};
 
 #[derive(PartialEq, Copy, Clone, Debug)]
@@ -14,11 +15,16 @@ pub struct Map {
     pub rooms: Vec<Rect>,
     pub width: i32,
     pub height: i32,
+    pub revealed_tiles : Vec<Vec<bool>>
 }
 
 impl Map {
     pub fn xy_idx(&self, x: i32, y: i32) -> usize {
         (y * self.width) as usize + x as usize
+    }
+
+    pub fn idx_xy(&self, idx: usize) -> (usize, usize) {
+        (idx % self.width as usize, idx / self.width as usize)
     }
 
     fn apply_horizontal_tunnel(&mut self, x1: i32, x2: i32, y: i32) {
@@ -62,6 +68,7 @@ impl Map {
             rooms: Vec::new(),
             width: MAP_X,
             height: MAP_Y,
+            revealed_tiles: vec![vec![false; max_y as usize]; max_x as usize]
         };
 
         let mut rng = RandomNumberGenerator::new();
@@ -100,27 +107,44 @@ impl Map {
     }
 }
 
-pub fn draw_map(map: &[Vec<TileType>], ctx: &mut BTerm) {
-    for (x, line) in map.iter().enumerate() {
+impl Algorithm2D for Map {
+    fn dimensions(&self) -> Point {
+        Point::new(self.width, self.height)
+    }
+}
+
+impl BaseMap for Map {
+    fn is_opaque(&self, idx:usize) -> bool {
+        let (x, y) = self.idx_xy(idx);
+        self.tiles[x][y] == TileType::Wall
+    }
+}
+
+pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
+    let map = ecs.fetch::<Map>();
+
+    for (x, line) in map.tiles.iter().enumerate() {
         for (y, tile) in line.iter().enumerate() {
-            match tile {
-                TileType::Floor => {
-                    ctx.set(
-                        x,
-                        y,
-                        RGB::named(GROUND_COLOR),
-                        RGB::named(BASE_BG_COLOR),
-                        to_cp437('.'),
-                    );
-                }
-                TileType::Wall => {
-                    ctx.set(
-                        x,
-                        y,
-                        RGB::named(WALL_COLOR),
-                        RGB::named(BASE_BG_COLOR),
-                        to_cp437('#'),
-                    );
+            if map.revealed_tiles[x][y] {
+                match tile {
+                    TileType::Floor => {
+                        ctx.set(
+                            x,
+                            y,
+                            RGB::named(GROUND_COLOR),
+                            RGB::named(BASE_BG_COLOR),
+                            to_cp437('.'),
+                        );
+                    }
+                    TileType::Wall => {
+                        ctx.set(
+                            x,
+                            y,
+                            RGB::named(WALL_COLOR),
+                            RGB::named(BASE_BG_COLOR),
+                            to_cp437('#'),
+                        );
+                    }
                 }
             }
         }
