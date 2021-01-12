@@ -28,7 +28,7 @@ impl Rect {
         ((self.x1 + self.x2)/2, (self.y1 + self.y2)/2)
     }
 
-    pub fn out_of_bounds(&self, map: &mut [Vec<TileType>]) -> bool {
+    pub fn out_of_bounds(&self, map: &[Vec<TileType>]) -> bool {
         let corners = [(self.x1, self.y1), (self.x1, self.y2), (self.x2, self.y1), (self.x2, self.y2)];
         corners.iter().any(|&corner| corner.0 > map.len() as i32 || corner.1 > map[0].len() as i32)
     }
@@ -61,17 +61,42 @@ pub fn draw_map(map: &[Vec<TileType>], ctx: &mut BTerm) {
     }
 }
 
-pub fn new_map(max_x: i32, max_y: i32) -> Vec<Vec<TileType>> {
+pub fn new_map(max_x: i32, max_y: i32) -> (Vec<Rect>, Vec<Vec<TileType>>) {
     let mut map = vec![vec![TileType::Wall; max_y as usize]; max_x as usize];
 
-    let room1 = Rect::new(20, 15, 10, 15);
-    let room2 = Rect::new(35, 15, 10, 15);
+    let mut rooms : Vec<Rect> = Vec::new();
+    const MAX_ROOMS : i32 = 40;
+    const MIN_SIZE : i32 = 6;
+    const MAX_SIZE : i32 = 10;
 
-    apply_room_to_map(&room1, map.as_mut_slice());
-    apply_room_to_map(&room2, map.as_mut_slice());
-    apply_horizontal_tunnel(map.as_mut_slice(), 25, 40, 23);
+    let mut rng = RandomNumberGenerator::new();
 
-    map
+    for _ in 0..MAX_ROOMS {
+        let w = rng.range(MIN_SIZE, MAX_SIZE);
+        let h = rng.range(MIN_SIZE, MAX_SIZE);
+        let x = rng.roll_dice(1, 80 - w - 1) - 1;
+        let y = rng.roll_dice(1, 50 - h - 1) - 1;
+        let new_room = Rect::new(x, y, w, h);
+        if rooms.iter().all(|other_room| !new_room.intersect(&other_room)) && !new_room.out_of_bounds(&map) {
+            apply_room_to_map(&new_room, &mut map);
+
+            if !rooms.is_empty() {
+                let (new_x, new_y) = new_room.center();
+                let (prev_x, prev_y) = rooms[rooms.len()-1].center();
+                if rng.range(0,2) == 1 {
+                    apply_horizontal_tunnel(&mut map, prev_x, new_x, prev_y);
+                    apply_vertical_tunnel(&mut map, prev_y, new_y, new_x);
+                } else {
+                    apply_vertical_tunnel(&mut map, prev_y, new_y, prev_x);
+                    apply_horizontal_tunnel(&mut map, prev_x, new_x, new_y);
+                }
+            }
+
+            rooms.push(new_room);
+        }
+    }
+
+    (rooms, map)
 }
 
 pub fn xy_idx(x: i32, y: i32) -> usize {
