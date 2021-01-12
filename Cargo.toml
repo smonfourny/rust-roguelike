@@ -1,5 +1,5 @@
 [package]
-name = "roguelike"
+name = "explore"
 version = "0.1.0"
 authors = ["S. <smonfourny@gmail.com>"]
 edition = "2018"

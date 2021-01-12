@@ -33,7 +33,7 @@ impl GameState for State {
 
 fn main() -> BError {
     let context = BTermBuilder::simple80x50()
-        .with_title("Roguelike Tutorial")
+        .with_title("Explore")
         .build()?;
     let mut gs = State { ecs: World::new() };
     gs.ecs.register::<Position>();

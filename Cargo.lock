@@ -513,6 +513,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
+name = "explore"
+version = "0.1.0"
+dependencies = [
+ "bracket-lib",
+ "specs",
+ "specs-derive",
+]
+
+[[package]]
 name = "flate2"
 version = "1.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1377,15 +1386,6 @@ name = "regex-syntax"
 version = "0.6.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5eb417147ba9860a96cfe72a0b93bf88fee1744b5636ec99ab20c1aa9376581"
-
-[[package]]
-name = "roguelike"
-version = "0.1.0"
-dependencies = [
- "bracket-lib",
- "specs",
- "specs-derive",
-]
 
 [[package]]
 name = "rustc_version"
