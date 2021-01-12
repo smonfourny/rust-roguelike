@@ -1,4 +1,4 @@
-use crate::constants::{BASE_BG_COLOR, GROUND_COLOR, MAP_X, MAP_Y, WALL_COLOR};
+use crate::constants::{BASE_BG_COLOR, FLOOR_COLOR, FLOOR_COLOR_OOS, MAP_X, MAP_Y, WALL_COLOR, WALL_COLOR_OOS};
 use crate::rect::Rect;
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -16,6 +16,7 @@ pub struct Map {
     pub width: i32,
     pub height: i32,
     pub revealed_tiles: Vec<Vec<bool>>,
+    pub visible_tiles: Vec<Vec<bool>>
 }
 
 impl Map {
@@ -69,6 +70,7 @@ impl Map {
             width: MAP_X,
             height: MAP_Y,
             revealed_tiles: vec![vec![false; max_y as usize]; max_x as usize],
+            visible_tiles: vec![vec![false; max_y as usize]; max_x as usize],
         };
 
         let mut rng = RandomNumberGenerator::new();
@@ -126,26 +128,19 @@ pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
     for (x, line) in map.tiles.iter().enumerate() {
         for (y, tile) in line.iter().enumerate() {
             if map.revealed_tiles[x][y] {
+                let glyph;
+                let fg;
                 match tile {
                     TileType::Floor => {
-                        ctx.set(
-                            x,
-                            y,
-                            RGB::named(GROUND_COLOR),
-                            RGB::named(BASE_BG_COLOR),
-                            to_cp437('.'),
-                        );
+                        glyph = to_cp437('.');
+                        fg = if map.visible_tiles[x][y] { FLOOR_COLOR } else { FLOOR_COLOR_OOS };
                     }
                     TileType::Wall => {
-                        ctx.set(
-                            x,
-                            y,
-                            RGB::named(WALL_COLOR),
-                            RGB::named(BASE_BG_COLOR),
-                            to_cp437('#'),
-                        );
+                        glyph = to_cp437('#');
+                        fg = if map.visible_tiles[x][y] { WALL_COLOR } else { WALL_COLOR_OOS };
                     }
                 }
+                ctx.set(x, y, RGB::named(fg), RGB::named(BASE_BG_COLOR), glyph);
             }
         }
     }
