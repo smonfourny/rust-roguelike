@@ -4,12 +4,12 @@ use specs_derive::Component;
 use std::cmp::{max, min};
 
 struct State {
-    ecs: World
+    ecs: World,
 }
 
 impl State {
     fn run_systems(&mut self) {
-        let mut lw = LeftWalker{};
+        let mut lw = LeftWalker {};
         lw.run_now(&self.ecs);
         self.ecs.maintain();
     }
@@ -29,6 +29,12 @@ impl GameState for State {
             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
         }
     }
+}
+
+#[derive(PartialEq, Copy, Clone)]
+enum TileType {
+    Wall,
+    Floor,
 }
 
 #[derive(Component)]
@@ -55,10 +61,12 @@ struct Player {}
 impl<'a> System<'a> for LeftWalker {
     type SystemData = (ReadStorage<'a, LeftMover>, WriteStorage<'a, Position>);
 
-    fn run(&mut self, (lefty, mut pos): Self::SystemData)  {
+    fn run(&mut self, (lefty, mut pos): Self::SystemData) {
         for (_lefty, pos) in (&lefty, &mut pos).join() {
             pos.x -= 1;
-            if pos.x < 0 { pos.x = 79; }
+            if pos.x < 0 {
+                pos.x = 79;
+            }
         }
     }
 }
@@ -67,33 +75,32 @@ fn main() -> BError {
     let context = BTermBuilder::simple80x50()
         .with_title("Roguelike Tutorial")
         .build()?;
-    let mut gs = State {
-        ecs: World::new()
-    };
+    let mut gs = State { ecs: World::new() };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<LeftMover>();
     gs.ecs.register::<Player>();
-    gs.ecs.create_entity()
+    gs.ecs
+        .create_entity()
         .with(Position { x: 40, y: 25 })
         .with(Renderable {
             glyph: to_cp437('@'),
             fg: RGB::named(YELLOW),
             bg: RGB::named(BLACK),
         })
-        .with(Player{})
+        .with(Player {})
         .build();
     for i in 0..10 {
         gs.ecs
-        .create_entity()
-        .with(Position { x: i * 7, y: 20 })
-        .with(Renderable {
-            glyph: to_cp437('☺'),
-            fg: RGB::named(RED),
-            bg: RGB::named(BLACK),
-        })
-        .with(LeftMover{})
-        .build();
+            .create_entity()
+            .with(Position { x: i * 7, y: 20 })
+            .with(Renderable {
+                glyph: to_cp437('☺'),
+                fg: RGB::named(RED),
+                bg: RGB::named(BLACK),
+            })
+            .with(LeftMover {})
+            .build();
     }
 
     main_loop(context, gs)
@@ -111,13 +118,13 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
 
 fn player_input(gs: &mut State, ctx: &mut BTerm) {
     match ctx.key {
-        None => {},
+        None => {}
         Some(key) => match key {
             VirtualKeyCode::Left => try_move_player(-1, 0, &mut gs.ecs),
             VirtualKeyCode::Right => try_move_player(1, 0, &mut gs.ecs),
             VirtualKeyCode::Up => try_move_player(0, -1, &mut gs.ecs),
             VirtualKeyCode::Down => try_move_player(0, 1, &mut gs.ecs),
-            _ => {},
+            _ => {}
         },
     }
 }
