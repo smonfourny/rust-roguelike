@@ -5,13 +5,24 @@ use std::cmp::{max, min};
 mod components;
 mod constants;
 mod map;
+mod rect;
+mod visibility;
 
-use components::{Player, Position, Renderable};
+use components::{Player, Position, Renderable, Viewshed};
 use constants::{BASE_BG_COLOR, MAP_X, MAP_Y, PLAYER_COLOR};
 use map::{draw_map, Map, TileType};
+use visibility::VisibilitySystem;
 
 struct State {
     ecs: World,
+}
+
+impl State {
+    fn run_systems(&mut self) {
+        let mut vis = VisibilitySystem{};
+        vis.run_now(&self.ecs);
+        self.ecs.maintain();
+    }
 }
 
 impl GameState for State {
@@ -38,6 +49,7 @@ fn main() -> BError {
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Viewshed>();
     let map = Map::new_map(MAP_X, MAP_Y);
     gs.ecs.insert(map.tiles);
     let (player_x, player_y) = map.rooms[0].center();
@@ -53,6 +65,7 @@ fn main() -> BError {
             bg: RGB::named(BASE_BG_COLOR),
         })
         .with(Player {})
+        .with(Viewshed { visible_tiles: Vec::new(), range: 8 })
         .build();
 
     main_loop(context, gs)
