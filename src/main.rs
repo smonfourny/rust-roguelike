@@ -32,9 +32,7 @@ impl GameState for State {
 }
 
 fn main() -> BError {
-    let context = BTermBuilder::simple80x50()
-        .with_title("Explore")
-        .build()?;
+    let context = BTermBuilder::simple80x50().with_title("Explore").build()?;
     let mut gs = State { ecs: World::new() };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
@@ -44,7 +42,10 @@ fn main() -> BError {
     let (player_x, player_y) = map.rooms[0].center();
     gs.ecs
         .create_entity()
-        .with(Position { x: player_x, y: player_y })
+        .with(Position {
+            x: player_x,
+            y: player_y,
+        })
         .with(Renderable {
             glyph: to_cp437('@'),
             fg: RGB::named(PLAYER_COLOR),
@@ -76,18 +77,18 @@ fn player_input(gs: &mut State, ctx: &mut BTerm) {
     match ctx.key {
         None => {}
         Some(key) => match key {
-            VirtualKeyCode::Numpad4 |
-            VirtualKeyCode::H |
-            VirtualKeyCode::Left => try_move_player(-1, 0, &mut gs.ecs),
-            VirtualKeyCode::Numpad6 |
-            VirtualKeyCode::L |
-            VirtualKeyCode::Right => try_move_player(1, 0, &mut gs.ecs),
-            VirtualKeyCode::Numpad8 |
-            VirtualKeyCode::K |
-            VirtualKeyCode::Up => try_move_player(0, -1, &mut gs.ecs),
-            VirtualKeyCode::Numpad2 |
-            VirtualKeyCode::J |
-            VirtualKeyCode::Down => try_move_player(0, 1, &mut gs.ecs),
+            VirtualKeyCode::Numpad4 | VirtualKeyCode::H | VirtualKeyCode::Left => {
+                try_move_player(-1, 0, &mut gs.ecs)
+            }
+            VirtualKeyCode::Numpad6 | VirtualKeyCode::L | VirtualKeyCode::Right => {
+                try_move_player(1, 0, &mut gs.ecs)
+            }
+            VirtualKeyCode::Numpad8 | VirtualKeyCode::K | VirtualKeyCode::Up => {
+                try_move_player(0, -1, &mut gs.ecs)
+            }
+            VirtualKeyCode::Numpad2 | VirtualKeyCode::J | VirtualKeyCode::Down => {
+                try_move_player(0, 1, &mut gs.ecs)
+            }
             _ => {}
         },
     }
