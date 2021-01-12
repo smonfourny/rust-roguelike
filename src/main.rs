@@ -3,6 +3,11 @@ use specs::prelude::*;
 use specs_derive::Component;
 use std::cmp::{max, min};
 
+static BASE_BG_COLOR: (u8, u8, u8) = (29, 32, 33);
+static PLAYER_COLOR: (u8, u8, u8) = (251, 73, 52);
+static WALL_COLOR: (u8, u8, u8) = (80, 73, 69);
+static GROUND_COLOR: (u8, u8, u8) = (102, 92, 84);
+
 struct State {
     ecs: World,
 }
@@ -61,8 +66,8 @@ fn main() -> BError {
         .with(Position { x: 40, y: 25 })
         .with(Renderable {
             glyph: to_cp437('@'),
-            fg: RGB::named(YELLOW),
-            bg: RGB::named(BLACK),
+            fg: RGB::named(PLAYER_COLOR),
+            bg: RGB::named(BASE_BG_COLOR),
         })
         .with(Player {})
         .build();
@@ -128,8 +133,8 @@ fn draw_map(map: &[TileType], ctx: &mut BTerm) {
                 ctx.set(
                     x,
                     y,
-                    RGB::from_f32(0.0, 1.0, 0.0),
-                    RGB::from_f32(0., 0., 0.),
+                    RGB::named(GROUND_COLOR),
+                    RGB::named(BASE_BG_COLOR),
                     to_cp437('.'),
                 );
             }
@@ -137,8 +142,8 @@ fn draw_map(map: &[TileType], ctx: &mut BTerm) {
                 ctx.set(
                     x,
                     y,
-                    RGB::from_f32(0.0, 1.0, 0.0),
-                    RGB::from_f32(0., 0., 0.),
+                    RGB::named(WALL_COLOR),
+                    RGB::named(BASE_BG_COLOR),
                     to_cp437('#'),
                 );
             }
