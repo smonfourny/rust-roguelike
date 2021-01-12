@@ -39,9 +39,9 @@ fn main() -> BError {
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
-    let (rooms, map) = new_map(MAP_X, MAP_Y);
-    gs.ecs.insert(map);
-    let (player_x, player_y) = rooms[0].center();
+    let map = Map::new_map(MAP_X, MAP_Y);
+    gs.ecs.insert(map.tiles);
+    let (player_x, player_y) = map.rooms[0].center();
     gs.ecs
         .create_entity()
         .with(Position { x: player_x, y: player_y })
