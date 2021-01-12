@@ -3,11 +3,12 @@ use specs::prelude::*;
 use std::cmp::{max, min};
 
 mod components;
-use components::*;
 mod constants;
-use constants::*;
 mod map;
-use map::*;
+
+use components::{Player, Position, Renderable};
+use constants::{BASE_BG_COLOR, MAP_X, MAP_Y, PLAYER_COLOR};
+use map::{draw_map, Map, TileType};
 
 struct State {
     ecs: World,

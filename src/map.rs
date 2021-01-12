@@ -1,4 +1,4 @@
-use crate::constants::*;
+use crate::constants::{BASE_BG_COLOR, GROUND_COLOR, MAP_X, MAP_Y, WALL_COLOR};
 use bracket_lib::prelude::*;
 use std::cmp::{max, min};
 
@@ -52,16 +52,16 @@ impl Map {
     }
 
     pub fn new_map(max_x: i32, max_y: i32) -> Map {
+        const MAX_ROOMS: i32 = 40;
+        const MIN_SIZE: i32 = 6;
+        const MAX_SIZE: i32 = 10;
+
         let mut map = Map {
             tiles: vec![vec![TileType::Wall; max_y as usize]; max_x as usize],
             rooms: Vec::new(),
             width: MAP_X,
             height: MAP_Y,
         };
-
-        const MAX_ROOMS: i32 = 40;
-        const MIN_SIZE: i32 = 6;
-        const MAX_SIZE: i32 = 10;
 
         let mut rng = RandomNumberGenerator::new();
 
