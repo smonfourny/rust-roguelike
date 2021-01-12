@@ -15,7 +15,7 @@ pub struct Map {
     pub rooms: Vec<Rect>,
     pub width: i32,
     pub height: i32,
-    pub revealed_tiles : Vec<Vec<bool>>
+    pub revealed_tiles: Vec<Vec<bool>>,
 }
 
 impl Map {
@@ -68,7 +68,7 @@ impl Map {
             rooms: Vec::new(),
             width: MAP_X,
             height: MAP_Y,
-            revealed_tiles: vec![vec![false; max_y as usize]; max_x as usize]
+            revealed_tiles: vec![vec![false; max_y as usize]; max_x as usize],
         };
 
         let mut rng = RandomNumberGenerator::new();
@@ -114,7 +114,7 @@ impl Algorithm2D for Map {
 }
 
 impl BaseMap for Map {
-    fn is_opaque(&self, idx:usize) -> bool {
+    fn is_opaque(&self, idx: usize) -> bool {
         let (x, y) = self.idx_xy(idx);
         self.tiles[x][y] == TileType::Wall
     }

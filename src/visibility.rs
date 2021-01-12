@@ -1,7 +1,7 @@
+use super::{Map, Player};
+use super::{Position, Viewshed};
 use bracket_lib::prelude::*;
 use specs::prelude::*;
-use super::{Viewshed, Position};
-use super::{Map, Player};
 
 pub struct VisibilitySystem {}
 
@@ -11,7 +11,7 @@ impl<'a> System<'a> for VisibilitySystem {
         Entities<'a>,
         WriteStorage<'a, Viewshed>,
         WriteStorage<'a, Position>,
-        ReadStorage<'a, Player>
+        ReadStorage<'a, Player>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -20,7 +20,9 @@ impl<'a> System<'a> for VisibilitySystem {
         for (ent, viewshed, pos) in (&entities, &mut viewshed, &pos).join() {
             viewshed.visible_tiles.clear();
             viewshed.visible_tiles = field_of_view(Point::new(pos.x, pos.y), viewshed.range, &*map);
-            viewshed.visible_tiles.retain(|p| p.x >= 0 && p.x < map.width && p.y >= 0 && p.y < map.height);
+            viewshed
+                .visible_tiles
+                .retain(|p| p.x >= 0 && p.x < map.width && p.y >= 0 && p.y < map.height);
 
             // If this is the player, reveal visible tiles
             let p: Option<&Player> = player.get(ent);

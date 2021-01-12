@@ -19,7 +19,7 @@ struct State {
 
 impl State {
     fn run_systems(&mut self) {
-        let mut vis = VisibilitySystem{};
+        let mut vis = VisibilitySystem {};
         vis.run_now(&self.ecs);
         self.ecs.maintain();
     }
@@ -67,7 +67,10 @@ fn main() -> BError {
             bg: RGB::named(BASE_BG_COLOR),
         })
         .with(Player {})
-        .with(Viewshed { visible_tiles: Vec::new(), range: 8 })
+        .with(Viewshed {
+            visible_tiles: Vec::new(),
+            range: 8,
+        })
         .build();
 
     main_loop(context, gs)
