@@ -1,4 +1,6 @@
-use crate::constants::{BASE_BG_COLOR, FLOOR_COLOR, FLOOR_COLOR_OOS, MAP_X, MAP_Y, WALL_COLOR, WALL_COLOR_OOS};
+use crate::constants::{
+    BASE_BG_COLOR, FLOOR_COLOR, FLOOR_COLOR_OOS, MAP_X, MAP_Y, WALL_COLOR, WALL_COLOR_OOS,
+};
 use crate::rect::Rect;
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -16,7 +18,7 @@ pub struct Map {
     pub width: i32,
     pub height: i32,
     pub revealed_tiles: Vec<Vec<bool>>,
-    pub visible_tiles: Vec<Vec<bool>>
+    pub visible_tiles: Vec<Vec<bool>>,
 }
 
 impl Map {
@@ -133,11 +135,19 @@ pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
                 match tile {
                     TileType::Floor => {
                         glyph = to_cp437('.');
-                        fg = if map.visible_tiles[x][y] { FLOOR_COLOR } else { FLOOR_COLOR_OOS };
+                        fg = if map.visible_tiles[x][y] {
+                            FLOOR_COLOR
+                        } else {
+                            FLOOR_COLOR_OOS
+                        };
                     }
                     TileType::Wall => {
                         glyph = to_cp437('#');
-                        fg = if map.visible_tiles[x][y] { WALL_COLOR } else { WALL_COLOR_OOS };
+                        fg = if map.visible_tiles[x][y] {
+                            WALL_COLOR
+                        } else {
+                            WALL_COLOR_OOS
+                        };
                     }
                 }
                 ctx.set(x, y, RGB::named(fg), RGB::named(BASE_BG_COLOR), glyph);

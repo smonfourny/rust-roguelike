@@ -9,14 +9,17 @@ mod map;
 mod rect;
 mod visibility;
 
-use ai::{MonsterAI};
+use ai::MonsterAI;
 use components::{Monster, Name, Player, Position, Renderable, Viewshed};
 use constants::{BASE_BG_COLOR, BROWN_SHIRT_COLOR, MAP_X, MAP_Y, PLAYER_COLOR};
 use map::{draw_map, Map, TileType};
 use visibility::VisibilitySystem;
 
 #[derive(PartialEq, Copy, Clone)]
-pub enum RunState { Paused, Running }
+pub enum RunState {
+    Paused,
+    Running,
+}
 
 struct State {
     ecs: World,
@@ -62,7 +65,10 @@ impl GameState for State {
 
 fn main() -> BError {
     let context = BTermBuilder::simple80x50().with_title("Explore").build()?;
-    let mut gs = State { ecs: World::new(), runstate: RunState::Running };
+    let mut gs = State {
+        ecs: World::new(),
+        runstate: RunState::Running,
+    };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
@@ -87,36 +93,47 @@ fn main() -> BError {
         .with(Viewshed {
             visible_tiles: Vec::new(),
             range: 8,
-            dirty: true
+            dirty: true,
         })
-        .with(Name { name: "Player".to_string() })
+        .with(Name {
+            name: "Player".to_string(),
+        })
         .build();
 
     for (i, room) in map.rooms.iter().skip(1).enumerate() {
         let (x, y) = room.center();
 
         let mut rng = RandomNumberGenerator::new();
-        let glyph : FontCharType;
-        let name : String;
+        let glyph: FontCharType;
+        let name: String;
         match rng.roll_dice(1, 2) {
-            1 => { glyph = to_cp437('f'); name = "Fascist".to_string(); },
-            _ => { glyph = to_cp437('n'); name = "Nazi".to_string(); }
+            1 => {
+                glyph = to_cp437('f');
+                name = "Fascist".to_string();
+            }
+            _ => {
+                glyph = to_cp437('n');
+                name = "Nazi".to_string();
+            }
         };
 
-        gs.ecs.create_entity()
+        gs.ecs
+            .create_entity()
             .with(Position { x, y })
             .with(Renderable {
                 glyph,
                 fg: RGB::named(BROWN_SHIRT_COLOR),
-                bg: RGB::named(BASE_BG_COLOR)
+                bg: RGB::named(BASE_BG_COLOR),
             })
             .with(Viewshed {
                 visible_tiles: Vec::new(),
                 range: 6,
-                dirty: true
+                dirty: true,
             })
-            .with(Monster{})
-            .with(Name{ name: format!("{} {}", &name, i) })
+            .with(Monster {})
+            .with(Name {
+                name: format!("{} {}", &name, i),
+            })
             .build();
     }
     gs.ecs.insert(map);
@@ -150,7 +167,7 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
 
 fn player_input(gs: &mut State, ctx: &mut BTerm) -> RunState {
     match ctx.key {
-        None => { return RunState::Paused }
+        None => return RunState::Paused,
         Some(key) => match key {
             VirtualKeyCode::Numpad4 | VirtualKeyCode::H | VirtualKeyCode::Left => {
                 try_move_player(-1, 0, &mut gs.ecs)
@@ -164,7 +181,7 @@ fn player_input(gs: &mut State, ctx: &mut BTerm) -> RunState {
             VirtualKeyCode::Numpad2 | VirtualKeyCode::J | VirtualKeyCode::Down => {
                 try_move_player(0, 1, &mut gs.ecs)
             }
-            _ => { return RunState::Paused }
+            _ => return RunState::Paused,
         },
     }
     RunState::Running

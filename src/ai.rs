@@ -1,6 +1,6 @@
+use super::{Monster, Name, Viewshed};
 use bracket_lib::prelude::*;
 use specs::prelude::*;
-use super::{Viewshed, Monster, Name};
 
 pub struct MonsterAI {}
 
@@ -9,7 +9,7 @@ impl<'a> System<'a> for MonsterAI {
         ReadExpect<'a, Point>,
         ReadStorage<'a, Viewshed>,
         ReadStorage<'a, Monster>,
-        ReadStorage<'a, Name>
+        ReadStorage<'a, Name>,
     );
 
     fn run(&mut self, data: Self::SystemData) {

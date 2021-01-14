@@ -21,7 +21,8 @@ impl<'a> System<'a> for VisibilitySystem {
             if viewshed.dirty {
                 viewshed.dirty = false;
                 viewshed.visible_tiles.clear();
-                viewshed.visible_tiles = field_of_view(Point::new(pos.x, pos.y), viewshed.range, &*map);
+                viewshed.visible_tiles =
+                    field_of_view(Point::new(pos.x, pos.y), viewshed.range, &*map);
                 viewshed
                     .visible_tiles
                     .retain(|p| p.x >= 0 && p.x < map.width && p.y >= 0 && p.y < map.height);
