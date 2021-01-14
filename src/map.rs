@@ -109,6 +109,11 @@ impl Map {
 
         map
     }
+
+    fn is_exit_valid(&self, x: i32, y: i32) -> bool {
+        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 { return false; }
+        self.tiles[x as usize][y as usize] != TileType::Wall
+    }
 }
 
 impl Algorithm2D for Map {
@@ -121,6 +126,27 @@ impl BaseMap for Map {
     fn is_opaque(&self, idx: usize) -> bool {
         let (x, y) = self.idx_xy(idx);
         self.tiles[x][y] == TileType::Wall
+    }
+
+    fn get_available_exits(&self, idx: usize) -> SmallVec<[(usize, f32); 10]> {
+        let mut exits = SmallVec::new();
+        let x = idx as i32 % self.width;
+        let y = idx as i32 / self.width;
+        let w = self.width as usize;
+
+        if self.is_exit_valid(x-1, y) { exits.push((idx-1, 1.0)) };
+        if self.is_exit_valid(x+1, y) { exits.push((idx+1, 1.0)) };
+        if self.is_exit_valid(x, y-1) { exits.push((idx-w, 1.0)) };
+        if self.is_exit_valid(x, y+1) { exits.push((idx+w, 1.0)) };
+
+        exits
+    }
+
+    fn get_pathing_distance(&self, idx1: usize, idx2: usize) -> f32 {
+        let w = self.width as usize;
+        let p1 = Point::new(idx1 % w, idx1 / w);
+        let p2 = Point::new(idx2 % w, idx2 / w);
+        DistanceAlg::Pythagoras.distance2d(p1, p2)
     }
 }
 
