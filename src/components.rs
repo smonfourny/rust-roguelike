@@ -3,6 +3,9 @@ use specs::prelude::*;
 use specs_derive::Component;
 
 #[derive(Component, Debug)]
+pub struct BlocksTile {}
+
+#[derive(Component, Debug)]
 pub struct Monster {}
 
 #[derive(Component, Debug)]

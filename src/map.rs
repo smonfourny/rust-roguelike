@@ -19,6 +19,7 @@ pub struct Map {
     pub height: i32,
     pub revealed_tiles: Vec<Vec<bool>>,
     pub visible_tiles: Vec<Vec<bool>>,
+    pub blocked: Vec<Vec<bool>>,
 }
 
 impl Map {
@@ -73,6 +74,7 @@ impl Map {
             height: MAP_Y,
             revealed_tiles: vec![vec![false; max_y as usize]; max_x as usize],
             visible_tiles: vec![vec![false; max_y as usize]; max_x as usize],
+            blocked: vec![vec![false; max_y as usize]; max_x as usize],
         };
 
         let mut rng = RandomNumberGenerator::new();
@@ -111,8 +113,18 @@ impl Map {
     }
 
     fn is_exit_valid(&self, x: i32, y: i32) -> bool {
-        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 { return false; }
-        self.tiles[x as usize][y as usize] != TileType::Wall
+        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+            return false;
+        }
+        !self.blocked[x as usize][y as usize]
+    }
+
+    pub fn populate_blocked(&mut self) {
+        for (x, line) in self.tiles.iter_mut().enumerate() {
+            for (y, tile) in line.iter_mut().enumerate() {
+                self.blocked[x][y] = *tile == TileType::Wall;
+            }
+        }
     }
 }
 
@@ -134,10 +146,18 @@ impl BaseMap for Map {
         let y = idx as i32 / self.width;
         let w = self.width as usize;
 
-        if self.is_exit_valid(x-1, y) { exits.push((idx-1, 1.0)) };
-        if self.is_exit_valid(x+1, y) { exits.push((idx+1, 1.0)) };
-        if self.is_exit_valid(x, y-1) { exits.push((idx-w, 1.0)) };
-        if self.is_exit_valid(x, y+1) { exits.push((idx+w, 1.0)) };
+        if self.is_exit_valid(x - 1, y) {
+            exits.push((idx - 1, 1.0))
+        };
+        if self.is_exit_valid(x + 1, y) {
+            exits.push((idx + 1, 1.0))
+        };
+        if self.is_exit_valid(x, y - 1) {
+            exits.push((idx - w, 1.0))
+        };
+        if self.is_exit_valid(x, y + 1) {
+            exits.push((idx + w, 1.0))
+        };
 
         exits
     }

@@ -6,13 +6,15 @@ mod ai;
 mod components;
 mod constants;
 mod map;
+mod map_indexing;
 mod rect;
 mod visibility;
 
 use ai::MonsterAI;
-use components::{Monster, Name, Player, Position, Renderable, Viewshed};
+use components::{BlocksTile, Monster, Name, Player, Position, Renderable, Viewshed};
 use constants::{BASE_BG_COLOR, BROWN_SHIRT_COLOR, MAP_X, MAP_Y, PLAYER_COLOR};
-use map::{draw_map, Map, TileType};
+use map::{draw_map, Map};
+use map_indexing::MapIndexingSystem;
 use visibility::VisibilitySystem;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -32,6 +34,8 @@ impl State {
         vis.run_now(&self.ecs);
         let mut mob = MonsterAI {};
         mob.run_now(&self.ecs);
+        let mut map_index = MapIndexingSystem {};
+        map_index.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -69,6 +73,7 @@ fn main() -> BError {
         ecs: World::new(),
         runstate: RunState::Running,
     };
+    gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
@@ -134,6 +139,7 @@ fn main() -> BError {
             .with(Name {
                 name: format!("{} {}", &name, i),
             })
+            .with(BlocksTile {})
             .build();
     }
     gs.ecs.insert(map);
@@ -149,18 +155,15 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let map = ecs.fetch::<Map>();
 
     for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewshed).join() {
-        match map.tiles[(pos.x + delta_x) as usize][(pos.y + delta_y) as usize] {
-            TileType::Wall => {}
-            TileType::Floor => {
-                pos.x = min(MAP_X - 1, max(0, pos.x + delta_x));
-                pos.y = min(MAP_Y - 1, max(0, pos.y + delta_y));
+        if !map.blocked[(pos.x + delta_x) as usize][(pos.y + delta_y) as usize] {
+            pos.x = min(MAP_X - 1, max(0, pos.x + delta_x));
+            pos.y = min(MAP_Y - 1, max(0, pos.y + delta_y));
 
-                let mut ppos = ecs.write_resource::<Point>();
-                ppos.x = pos.x;
-                ppos.y = pos.y;
+            let mut ppos = ecs.write_resource::<Point>();
+            ppos.x = pos.x;
+            ppos.y = pos.y;
 
-                viewshed.dirty = true;
-            }
+            viewshed.dirty = true;
         }
     }
 }

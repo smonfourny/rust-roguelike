@@ -11,19 +11,27 @@ impl<'a> System<'a> for MonsterAI {
         WriteStorage<'a, Viewshed>,
         ReadStorage<'a, Monster>,
         ReadStorage<'a, Name>,
-        WriteStorage<'a, Position>
+        WriteStorage<'a, Position>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
         let (mut map, player_pos, mut viewshed, monster, name, mut position) = data;
 
-        for (mut viewshed, _monster, name, mut pos) in (&mut viewshed, &monster, &name, &mut position).join() {
+        for (mut viewshed, _monster, _name, mut pos) in
+            (&mut viewshed, &monster, &name, &mut position).join()
+        {
             if viewshed.visible_tiles.contains(&*player_pos) {
-                // console::log(format!("{} shouts insults!", name.name));
+                let distance =
+                    DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
+                if distance < 1.5 {
+                    // Do not try to reach player if within 1 square (incl. diagonally)
+                    return;
+                }
+
                 let path = a_star_search(
                     map.xy_idx(pos.x, pos.y) as i32,
                     map.xy_idx(player_pos.x, player_pos.y) as i32,
-                    &mut *map
+                    &mut *map,
                 );
                 if path.success && path.steps.len() > 1 {
                     pos.x = path.steps[1] as i32 % map.width;
