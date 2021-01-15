@@ -1,4 +1,3 @@
-
 use bracket_lib::prelude::*;
 use specs::prelude::*;
 use std::cmp::{max, min};
@@ -15,14 +14,25 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let mut wants_to_melee = ecs.write_storage::<WantsToMelee>();
     let map = ecs.fetch::<Map>();
 
-    for (entity, _player, pos, viewshed) in (&entities, &mut players, &mut positions, &mut viewshed).join() {
+    for (entity, _player, pos, viewshed) in
+        (&entities, &mut players, &mut positions, &mut viewshed).join()
+    {
         let destination_x = pos.x + delta_x;
         let destination_y = pos.y + delta_y;
 
-        for potential_target in map.tile_content[destination_x as usize][destination_y as usize].iter() {
+        for potential_target in
+            map.tile_content[destination_x as usize][destination_y as usize].iter()
+        {
             let target = combat_stats.get(*potential_target);
             if let Some(_target) = target {
-                wants_to_melee.insert(entity, WantsToMelee { target: *potential_target }).expect("Add target failed");
+                wants_to_melee
+                    .insert(
+                        entity,
+                        WantsToMelee {
+                            target: *potential_target,
+                        },
+                    )
+                    .expect("Add target failed");
                 return;
             }
         }

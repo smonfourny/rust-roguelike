@@ -13,13 +13,16 @@ mod rect;
 mod visibility;
 
 use ai::MonsterAI;
-use components::{BlocksTile, CombatStats, Monster, Name, Player, Position, Renderable, SufferDamage, Viewshed, WantsToMelee};
+use components::{
+    BlocksTile, CombatStats, Monster, Name, Player, Position, Renderable, SufferDamage, Viewshed,
+    WantsToMelee,
+};
 use constants::{BASE_BG_COLOR, BROWN_SHIRT_COLOR, MAP_X, MAP_Y, PLAYER_COLOR};
 use damage_system::DamageSystem;
 use map::{draw_map, Map};
 use map_indexing::MapIndexingSystem;
 use melee_system::MeleeCombatSystem;
-use player::{player_input};
+use player::player_input;
 use visibility::VisibilitySystem;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -27,7 +30,7 @@ pub enum RunState {
     AwaitingInput,
     PreRun,
     PlayerTurn,
-    MonsterTurn
+    MonsterTurn,
 }
 
 pub struct State {
@@ -64,14 +67,14 @@ impl GameState for State {
             RunState::PreRun => {
                 self.run_systems();
                 new_runstate = RunState::AwaitingInput;
-            },
+            }
             RunState::AwaitingInput => {
                 new_runstate = player_input(self, ctx);
-            },
+            }
             RunState::PlayerTurn => {
                 self.run_systems();
                 new_runstate = RunState::MonsterTurn;
-            },
+            }
             RunState::MonsterTurn => {
                 self.run_systems();
                 new_runstate = RunState::AwaitingInput;
@@ -101,9 +104,7 @@ impl GameState for State {
 
 fn main() -> BError {
     let context = BTermBuilder::simple80x50().with_title("Explore").build()?;
-    let mut gs = State {
-        ecs: World::new(),
-    };
+    let mut gs = State { ecs: World::new() };
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
     gs.ecs.register::<Position>();
@@ -117,7 +118,8 @@ fn main() -> BError {
 
     let map = Map::new_map(MAP_X, MAP_Y);
     let (player_x, player_y) = map.rooms[0].center();
-    let player_entity = gs.ecs
+    let player_entity = gs
+        .ecs
         .create_entity()
         .with(Position {
             x: player_x,
@@ -185,7 +187,7 @@ fn main() -> BError {
                 max_hp: 15,
                 hp: 15,
                 defense: 1,
-                attack: 4
+                attack: 4,
             })
             .with(BlocksTile {})
             .build();

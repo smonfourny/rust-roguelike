@@ -1,4 +1,4 @@
-use super::{Map, Monster, Name, Point, Position, Viewshed, WantsToMelee};
+use super::{Map, Monster, Point, Position, Viewshed, WantsToMelee};
 use bracket_lib::prelude::*;
 use specs::prelude::*;
 
@@ -17,15 +17,31 @@ impl<'a> System<'a> for MonsterAI {
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut map, player_pos, player_entity, entities, mut viewshed, monster, mut position, mut wants_to_melee) = data;
+        let (
+            mut map,
+            player_pos,
+            player_entity,
+            entities,
+            mut viewshed,
+            monster,
+            mut position,
+            mut wants_to_melee,
+        ) = data;
 
         for (entity, mut viewshed, _monster, mut pos) in
             (&entities, &mut viewshed, &monster, &mut position).join()
         {
             let distance =
-                    DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
+                DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
             if distance < 1.5 {
-                wants_to_melee.insert(entity, WantsToMelee{ target: *player_entity }).expect("Unable to insert attack");
+                wants_to_melee
+                    .insert(
+                        entity,
+                        WantsToMelee {
+                            target: *player_entity,
+                        },
+                    )
+                    .expect("Unable to insert attack");
                 return;
             }
             if viewshed.visible_tiles.contains(&*player_pos) {
