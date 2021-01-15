@@ -3,7 +3,7 @@ use bracket_lib::prelude::*;
 use specs::prelude::*;
 use std::cmp::{max, min};
 
-use super::{BlocksTile, CombatStats, Map, Monster, Name, Player, Position, RunState, State, Viewshed};
+use super::{BlocksTile, CombatStats, Map, Monster, Name, Player, Position, RunState, State, Viewshed, WantsToMelee};
 use super::{MAP_X, MAP_Y};
 
 fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
@@ -11,20 +11,19 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let mut players = ecs.write_storage::<Player>();
     let mut viewshed = ecs.write_storage::<Viewshed>();
     let combat_stats = ecs.read_storage::<CombatStats>();
+    let entities = ecs.entities();
+    let mut wants_to_melee = ecs.write_storage::<WantsToMelee>();
     let map = ecs.fetch::<Map>();
 
-    for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewshed).join() {
+    for (entity, _player, pos, viewshed) in (&entities, &mut players, &mut positions, &mut viewshed).join() {
         let destination_x = pos.x + delta_x;
         let destination_y = pos.y + delta_y;
 
         for potential_target in map.tile_content[destination_x as usize][destination_y as usize].iter() {
             let target = combat_stats.get(*potential_target);
-            match target {
-                None => {},
-                Some(t) => {
-                    console::log(&format!("HIYAA"));
-                    return;
-                }
+            if let Some(_target) = target {
+                wants_to_melee.insert(entity, WantsToMelee { target: *potential_target }).expect("Add target failed");
+                return;
             }
         }
 

@@ -4,17 +4,21 @@ use specs::prelude::*;
 mod ai;
 mod components;
 mod constants;
+mod damage_system;
 mod map;
 mod map_indexing;
+mod melee_system;
 mod player;
 mod rect;
 mod visibility;
 
 use ai::MonsterAI;
-use components::{BlocksTile, CombatStats, Monster, Name, Player, Position, Renderable, Viewshed};
+use components::{BlocksTile, CombatStats, Monster, Name, Player, Position, Renderable, SufferDamage, Viewshed, WantsToMelee};
 use constants::{BASE_BG_COLOR, BROWN_SHIRT_COLOR, MAP_X, MAP_Y, PLAYER_COLOR};
+use damage_system::DamageSystem;
 use map::{draw_map, Map};
 use map_indexing::MapIndexingSystem;
+use melee_system::MeleeCombatSystem;
 use player::{player_input};
 use visibility::VisibilitySystem;
 
@@ -37,6 +41,11 @@ impl State {
         mob.run_now(&self.ecs);
         let mut map_index = MapIndexingSystem {};
         map_index.run_now(&self.ecs);
+        let mut melee = MeleeCombatSystem {};
+        melee.run_now(&self.ecs);
+        let mut damage = DamageSystem {};
+        damage.run_now(&self.ecs);
+
         self.ecs.maintain();
     }
 }
@@ -47,6 +56,7 @@ impl GameState for State {
 
         if self.runstate == RunState::Running {
             self.run_systems();
+            damage_system::delete_dead(&mut self.ecs);
             self.runstate = RunState::Paused;
         } else {
             self.runstate = player_input(self, ctx);
@@ -80,7 +90,9 @@ fn main() -> BError {
     gs.ecs.register::<Player>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
+    gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
+    gs.ecs.register::<WantsToMelee>();
 
     let map = Map::new_map(MAP_X, MAP_Y);
     let (player_x, player_y) = map.rooms[0].center();
