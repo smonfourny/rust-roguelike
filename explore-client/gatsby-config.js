@@ -2,5 +2,5 @@ module.exports = {
   siteMetadata: {
     title: "explore-client",
   },
-  plugins: [],
+  plugins: [`gatsby-plugin-postcss`],
 };
