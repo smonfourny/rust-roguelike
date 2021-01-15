@@ -154,13 +154,9 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let map = ecs.fetch::<Map>();
 
     for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewshed).join() {
-        console::log(format!("moving player {} {}", pos.x, pos.y));
-
         if !map.blocked[(pos.x + delta_x) as usize][(pos.y + delta_y) as usize] {
             pos.x = min(MAP_X - 1, max(0, pos.x + delta_x));
             pos.y = min(MAP_Y - 1, max(0, pos.y + delta_y));
-
-            console::log(format!("new position {} {}", pos.x, pos.y));
 
             let mut ppos = ecs.write_resource::<Point>();
             ppos.x = pos.x;
