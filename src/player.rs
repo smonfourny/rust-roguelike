@@ -3,7 +3,7 @@ use bracket_lib::prelude::*;
 use specs::prelude::*;
 use std::cmp::{max, min};
 
-use super::{BlocksTile, CombatStats, Map, Monster, Name, Player, Position, RunState, State, Viewshed, WantsToMelee};
+use super::{CombatStats, Map, Player, Position, RunState, State, Viewshed, WantsToMelee};
 use super::{MAP_X, MAP_Y};
 
 fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
