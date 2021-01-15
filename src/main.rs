@@ -96,7 +96,7 @@ fn main() -> BError {
 
     let map = Map::new_map(MAP_X, MAP_Y);
     let (player_x, player_y) = map.rooms[0].center();
-    gs.ecs
+    let player_entity = gs.ecs
         .create_entity()
         .with(Position {
             x: player_x,
@@ -123,6 +123,8 @@ fn main() -> BError {
             attack: 5,
         })
         .build();
+
+    gs.ecs.insert(player_entity);
 
     for (i, room) in map.rooms.iter().skip(1).enumerate() {
         let (x, y) = room.center();
