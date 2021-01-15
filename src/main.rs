@@ -1,20 +1,21 @@
 use bracket_lib::prelude::*;
 use specs::prelude::*;
-use std::cmp::{max, min};
 
 mod ai;
 mod components;
 mod constants;
 mod map;
 mod map_indexing;
+mod player;
 mod rect;
 mod visibility;
 
 use ai::MonsterAI;
-use components::{BlocksTile, Monster, Name, Player, Position, Renderable, Viewshed};
+use components::{BlocksTile, CombatStats, Monster, Name, Player, Position, Renderable, Viewshed};
 use constants::{BASE_BG_COLOR, BROWN_SHIRT_COLOR, MAP_X, MAP_Y, PLAYER_COLOR};
 use map::{draw_map, Map};
 use map_indexing::MapIndexingSystem;
+use player::{player_input};
 use visibility::VisibilitySystem;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -23,7 +24,7 @@ pub enum RunState {
     Running,
 }
 
-struct State {
+pub struct State {
     ecs: World,
     runstate: RunState,
 }
@@ -73,6 +74,7 @@ fn main() -> BError {
         runstate: RunState::Running,
     };
     gs.ecs.register::<BlocksTile>();
+    gs.ecs.register::<CombatStats>();
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
@@ -102,6 +104,12 @@ fn main() -> BError {
         .with(Name {
             name: "Player".to_string(),
         })
+        .with(CombatStats {
+            max_hp: 30,
+            hp: 30,
+            defense: 2,
+            attack: 5,
+        })
         .build();
 
     for (i, room) in map.rooms.iter().skip(1).enumerate() {
@@ -112,12 +120,12 @@ fn main() -> BError {
         let name: String;
         match rng.roll_dice(1, 2) {
             1 => {
-                glyph = to_cp437('f');
-                name = "Fascist".to_string();
+                glyph = to_cp437('o');
+                name = "Orc".to_string();
             }
             _ => {
-                glyph = to_cp437('n');
-                name = "Nazi".to_string();
+                glyph = to_cp437('g');
+                name = "Goblin".to_string();
             }
         };
 
@@ -138,6 +146,12 @@ fn main() -> BError {
             .with(Name {
                 name: format!("{} {}", &name, i),
             })
+            .with(CombatStats {
+                max_hp: 15,
+                hp: 15,
+                defense: 1,
+                attack: 4
+            })
             .with(BlocksTile {})
             .build();
     }
@@ -145,46 +159,4 @@ fn main() -> BError {
     gs.ecs.insert(Point::new(player_x, player_y));
 
     main_loop(context, gs)
-}
-
-fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
-    let mut positions = ecs.write_storage::<Position>();
-    let mut players = ecs.write_storage::<Player>();
-    let mut viewshed = ecs.write_storage::<Viewshed>();
-    let map = ecs.fetch::<Map>();
-
-    for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewshed).join() {
-        if !map.blocked[(pos.x + delta_x) as usize][(pos.y + delta_y) as usize] {
-            pos.x = min(MAP_X - 1, max(0, pos.x + delta_x));
-            pos.y = min(MAP_Y - 1, max(0, pos.y + delta_y));
-
-            let mut ppos = ecs.write_resource::<Point>();
-            ppos.x = pos.x;
-            ppos.y = pos.y;
-
-            viewshed.dirty = true;
-        }
-    }
-}
-
-fn player_input(gs: &mut State, ctx: &mut BTerm) -> RunState {
-    match ctx.key {
-        None => return RunState::Paused,
-        Some(key) => match key {
-            VirtualKeyCode::Numpad4 | VirtualKeyCode::H | VirtualKeyCode::Left => {
-                try_move_player(-1, 0, &mut gs.ecs)
-            }
-            VirtualKeyCode::Numpad6 | VirtualKeyCode::L | VirtualKeyCode::Right => {
-                try_move_player(1, 0, &mut gs.ecs)
-            }
-            VirtualKeyCode::Numpad8 | VirtualKeyCode::K | VirtualKeyCode::Up => {
-                try_move_player(0, -1, &mut gs.ecs)
-            }
-            VirtualKeyCode::Numpad2 | VirtualKeyCode::J | VirtualKeyCode::Down => {
-                try_move_player(0, 1, &mut gs.ecs)
-            }
-            _ => return RunState::Paused,
-        },
-    }
-    RunState::Running
 }
