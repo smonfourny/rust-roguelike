@@ -14,6 +14,12 @@ class IndexPage extends React.Component {
               <canvas id="canvas" width="640" height="480" className="rounded-lg"></canvas>
             </div>
           </div>
+          <p className="px-6 text-sm font-light">
+            Explore is written in Rust and compiled into WebAssembly. This page is best viewed on desktop.
+          </p>
+          <a href="https://github.com/smonfourny" className="px-6 font-bold text-red-600">
+            &gt; Find me on GitHub
+          </a>
         </div>
       </main>
     )
