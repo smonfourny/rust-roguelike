@@ -24,13 +24,14 @@ use visibility::VisibilitySystem;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
-    Paused,
-    Running,
+    AwaitingInput,
+    PreRun,
+    PlayerTurn,
+    MonsterTurn
 }
 
 pub struct State {
     ecs: World,
-    runstate: RunState,
 }
 
 impl State {
@@ -53,16 +54,37 @@ impl State {
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
         ctx.cls();
-
-        if self.runstate == RunState::Running {
-            self.run_systems();
-            damage_system::delete_dead(&mut self.ecs);
-            self.runstate = RunState::Paused;
-        } else {
-            self.runstate = player_input(self, ctx);
+        let mut new_runstate;
+        {
+            let runstate = self.ecs.fetch::<RunState>();
+            new_runstate = *runstate;
         }
 
-        // let map = self.ecs.fetch::<Map>();
+        match new_runstate {
+            RunState::PreRun => {
+                self.run_systems();
+                new_runstate = RunState::AwaitingInput;
+            },
+            RunState::AwaitingInput => {
+                new_runstate = player_input(self, ctx);
+            },
+            RunState::PlayerTurn => {
+                self.run_systems();
+                new_runstate = RunState::MonsterTurn;
+            },
+            RunState::MonsterTurn => {
+                self.run_systems();
+                new_runstate = RunState::AwaitingInput;
+            }
+        }
+
+        {
+            let mut runwriter = self.ecs.write_resource::<RunState>();
+            *runwriter = new_runstate;
+        }
+
+        damage_system::delete_dead(&mut self.ecs);
+
         draw_map(&self.ecs, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
@@ -81,7 +103,6 @@ fn main() -> BError {
     let context = BTermBuilder::simple80x50().with_title("Explore").build()?;
     let mut gs = State {
         ecs: World::new(),
-        runstate: RunState::Running,
     };
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
@@ -171,6 +192,7 @@ fn main() -> BError {
     }
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
+    gs.ecs.insert(RunState::PreRun);
 
     main_loop(context, gs)
 }
