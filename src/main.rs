@@ -1,31 +1,40 @@
 use bracket_lib::prelude::*;
 use specs::prelude::*;
-use std::cmp::{max, min};
 
 mod ai;
 mod components;
 mod constants;
+mod damage_system;
 mod map;
 mod map_indexing;
+mod melee_system;
+mod player;
 mod rect;
 mod visibility;
 
 use ai::MonsterAI;
-use components::{BlocksTile, Monster, Name, Player, Position, Renderable, Viewshed};
+use components::{
+    BlocksTile, CombatStats, Monster, Name, Player, Position, Renderable, SufferDamage, Viewshed,
+    WantsToMelee,
+};
 use constants::{BASE_BG_COLOR, BROWN_SHIRT_COLOR, MAP_X, MAP_Y, PLAYER_COLOR};
+use damage_system::DamageSystem;
 use map::{draw_map, Map};
 use map_indexing::MapIndexingSystem;
+use melee_system::MeleeCombatSystem;
+use player::player_input;
 use visibility::VisibilitySystem;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
-    Paused,
-    Running,
+    AwaitingInput,
+    PreRun,
+    PlayerTurn,
+    MonsterTurn,
 }
 
-struct State {
+pub struct State {
     ecs: World,
-    runstate: RunState,
 }
 
 impl State {
@@ -36,6 +45,11 @@ impl State {
         mob.run_now(&self.ecs);
         let mut map_index = MapIndexingSystem {};
         map_index.run_now(&self.ecs);
+        let mut melee = MeleeCombatSystem {};
+        melee.run_now(&self.ecs);
+        let mut damage = DamageSystem {};
+        damage.run_now(&self.ecs);
+
         self.ecs.maintain();
     }
 }
@@ -43,15 +57,37 @@ impl State {
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
         ctx.cls();
-
-        if self.runstate == RunState::Running {
-            self.run_systems();
-            self.runstate = RunState::Paused;
-        } else {
-            self.runstate = player_input(self, ctx);
+        let mut new_runstate;
+        {
+            let runstate = self.ecs.fetch::<RunState>();
+            new_runstate = *runstate;
         }
 
-        // let map = self.ecs.fetch::<Map>();
+        match new_runstate {
+            RunState::PreRun => {
+                self.run_systems();
+                new_runstate = RunState::AwaitingInput;
+            }
+            RunState::AwaitingInput => {
+                new_runstate = player_input(self, ctx);
+            }
+            RunState::PlayerTurn => {
+                self.run_systems();
+                new_runstate = RunState::MonsterTurn;
+            }
+            RunState::MonsterTurn => {
+                self.run_systems();
+                new_runstate = RunState::AwaitingInput;
+            }
+        }
+
+        {
+            let mut runwriter = self.ecs.write_resource::<RunState>();
+            *runwriter = new_runstate;
+        }
+
+        damage_system::delete_dead(&mut self.ecs);
+
         draw_map(&self.ecs, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
@@ -68,21 +104,22 @@ impl GameState for State {
 
 fn main() -> BError {
     let context = BTermBuilder::simple80x50().with_title("Explore").build()?;
-    let mut gs = State {
-        ecs: World::new(),
-        runstate: RunState::Running,
-    };
+    let mut gs = State { ecs: World::new() };
     gs.ecs.register::<BlocksTile>();
+    gs.ecs.register::<CombatStats>();
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
+    gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
+    gs.ecs.register::<WantsToMelee>();
 
     let map = Map::new_map(MAP_X, MAP_Y);
     let (player_x, player_y) = map.rooms[0].center();
-    gs.ecs
+    let player_entity = gs
+        .ecs
         .create_entity()
         .with(Position {
             x: player_x,
@@ -102,7 +139,15 @@ fn main() -> BError {
         .with(Name {
             name: "Player".to_string(),
         })
+        .with(CombatStats {
+            max_hp: 30,
+            hp: 30,
+            defense: 2,
+            attack: 5,
+        })
         .build();
+
+    gs.ecs.insert(player_entity);
 
     for (i, room) in map.rooms.iter().skip(1).enumerate() {
         let (x, y) = room.center();
@@ -112,12 +157,12 @@ fn main() -> BError {
         let name: String;
         match rng.roll_dice(1, 2) {
             1 => {
-                glyph = to_cp437('f');
-                name = "Fascist".to_string();
+                glyph = to_cp437('o');
+                name = "Orc".to_string();
             }
             _ => {
-                glyph = to_cp437('n');
-                name = "Nazi".to_string();
+                glyph = to_cp437('g');
+                name = "Goblin".to_string();
             }
         };
 
@@ -138,53 +183,18 @@ fn main() -> BError {
             .with(Name {
                 name: format!("{} {}", &name, i),
             })
+            .with(CombatStats {
+                max_hp: 15,
+                hp: 15,
+                defense: 1,
+                attack: 4,
+            })
             .with(BlocksTile {})
             .build();
     }
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
+    gs.ecs.insert(RunState::PreRun);
 
     main_loop(context, gs)
-}
-
-fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
-    let mut positions = ecs.write_storage::<Position>();
-    let mut players = ecs.write_storage::<Player>();
-    let mut viewshed = ecs.write_storage::<Viewshed>();
-    let map = ecs.fetch::<Map>();
-
-    for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewshed).join() {
-        if !map.blocked[(pos.x + delta_x) as usize][(pos.y + delta_y) as usize] {
-            pos.x = min(MAP_X - 1, max(0, pos.x + delta_x));
-            pos.y = min(MAP_Y - 1, max(0, pos.y + delta_y));
-
-            let mut ppos = ecs.write_resource::<Point>();
-            ppos.x = pos.x;
-            ppos.y = pos.y;
-
-            viewshed.dirty = true;
-        }
-    }
-}
-
-fn player_input(gs: &mut State, ctx: &mut BTerm) -> RunState {
-    match ctx.key {
-        None => return RunState::Paused,
-        Some(key) => match key {
-            VirtualKeyCode::Numpad4 | VirtualKeyCode::H | VirtualKeyCode::Left => {
-                try_move_player(-1, 0, &mut gs.ecs)
-            }
-            VirtualKeyCode::Numpad6 | VirtualKeyCode::L | VirtualKeyCode::Right => {
-                try_move_player(1, 0, &mut gs.ecs)
-            }
-            VirtualKeyCode::Numpad8 | VirtualKeyCode::K | VirtualKeyCode::Up => {
-                try_move_player(0, -1, &mut gs.ecs)
-            }
-            VirtualKeyCode::Numpad2 | VirtualKeyCode::J | VirtualKeyCode::Down => {
-                try_move_player(0, 1, &mut gs.ecs)
-            }
-            _ => return RunState::Paused,
-        },
-    }
-    RunState::Running
 }

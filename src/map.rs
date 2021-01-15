@@ -20,6 +20,7 @@ pub struct Map {
     pub revealed_tiles: Vec<Vec<bool>>,
     pub visible_tiles: Vec<Vec<bool>>,
     pub blocked: Vec<Vec<bool>>,
+    pub tile_content: Vec<Vec<Vec<Entity>>>,
 }
 
 impl Map {
@@ -75,6 +76,7 @@ impl Map {
             revealed_tiles: vec![vec![false; max_y as usize]; max_x as usize],
             visible_tiles: vec![vec![false; max_y as usize]; max_x as usize],
             blocked: vec![vec![false; max_y as usize]; max_x as usize],
+            tile_content: vec![vec![Vec::new(); max_y as usize]; max_x as usize],
         };
 
         let mut rng = RandomNumberGenerator::new();
@@ -117,6 +119,14 @@ impl Map {
             return false;
         }
         !self.blocked[x as usize][y as usize]
+    }
+
+    pub fn clear_content(&mut self) {
+        for line in self.tile_content.iter_mut() {
+            for content in line.iter_mut() {
+                content.clear();
+            }
+        }
     }
 
     pub fn populate_blocked(&mut self) {
