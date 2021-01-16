@@ -23,7 +23,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
     for (_player, stats) in (&players, &combat_stats).join() {
         let health_color = match stats.hp as f32 / stats.max_hp as f32 {
             x if x < 0.25 => RED_COLOR,
-            x if x >= 0.25 && x < 0.75 => ORANGE_COLOR,
+            x if (0.25..0.75).contains(&x) => ORANGE_COLOR,
             _ => CYAN_COLOR,
         };
 

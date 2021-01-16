@@ -36,7 +36,7 @@ pub fn delete_dead(ecs: &mut World) {
                         let mut runwriter = ecs.write_resource::<RunState>();
                         if *runwriter != RunState::Dead {
                             *runwriter = RunState::Dead;
-                            gamelog.entries.push(format!("You are dead!"));
+                            gamelog.entries.push("You are dead!".to_string());
                         }
                     }
                 }
