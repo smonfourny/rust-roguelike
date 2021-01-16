@@ -21,6 +21,8 @@ jobs:
         fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
     - name: Add wasm32-unknown-unknown target
       run: rustup target add wasm32-unknown-unknown
+    - name: Install wasm-bindgen
+      run: cargo install wasm-bindgen-cli
     - name: WASM build
       run: cargo build --release --target wasm32-unknown-unknown
     - name: WASM bindgen
