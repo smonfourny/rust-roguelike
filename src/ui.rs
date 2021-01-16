@@ -62,6 +62,18 @@ pub enum ItemMenuResult {
 }
 
 pub fn show_inventory(gs: &mut State, ctx: &mut BTerm) -> (ItemMenuResult, Option<Entity>) {
+    show_item_menu(gs, ctx, "Inventory")
+}
+
+pub fn show_drop_menu(gs: &mut State, ctx: &mut BTerm) -> (ItemMenuResult, Option<Entity>) {
+    show_item_menu(gs, ctx, "Choose item to drop:")
+}
+
+fn show_item_menu<S: ToString>(
+    gs: &mut State,
+    ctx: &mut BTerm,
+    title: S,
+) -> (ItemMenuResult, Option<Entity>) {
     let player_entity = gs.ecs.fetch::<Entity>();
     let names = gs.ecs.read_storage::<Name>();
     let backpack = gs.ecs.read_storage::<InBackpack>();
@@ -88,7 +100,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut BTerm) -> (ItemMenuResult, Optio
         y - 2,
         RGB::named(WHITE_COLOR),
         RGB::named(BASE_BG_COLOR),
-        "Inventory",
+        title.to_string(),
     );
     ctx.print_color(
         17,

@@ -39,6 +39,7 @@ pub enum RunState {
     PlayerTurn,
     MonsterTurn,
     ShowInventory,
+    ShowDropItem,
     Dead,
 }
 
@@ -64,6 +65,8 @@ impl State {
         item_listing.run_now(&self.ecs);
         let mut potions = PotionUseSystem {};
         potions.run_now(&self.ecs);
+        let mut drop = ItemDropSystem {};
+        drop.run_now(&self.ecs);
 
         self.ecs.maintain();
     }
@@ -78,18 +81,15 @@ impl GameState for State {
         {
             let positions = self.ecs.read_storage::<Position>();
             let renderables = self.ecs.read_storage::<Renderable>();
-            let player = self.ecs.read_storage::<Player>();
             let map = self.ecs.fetch::<Map>();
 
-            for (pos, render) in (&positions, &renderables).join() {
+            let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
+            data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
+
+            for (pos, render) in data.iter() {
                 if map.visible_tiles[pos.x as usize][pos.y as usize] {
                     ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
                 }
-            }
-
-            // Re-render the player, since we want them to always be on top of objects
-            for (pos, render, _player) in (&positions, &renderables, &player).join() {
-                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             }
 
             ui::draw_ui(&self.ecs, ctx);
@@ -137,6 +137,23 @@ impl GameState for State {
                     }
                 }
             }
+            RunState::ShowDropItem => {
+                let result = ui::show_drop_menu(self, ctx);
+                match result {
+                    (ui::ItemMenuResult::Cancel, _) => new_runstate = RunState::AwaitingInput,
+                    (ui::ItemMenuResult::NoResponse, _) | (ui::ItemMenuResult::Selected, None) => {}
+                    (ui::ItemMenuResult::Selected, Some(entity)) => {
+                        let mut intent = self.ecs.write_storage::<WantsToDropItem>();
+                        intent
+                            .insert(
+                                *self.ecs.fetch::<Entity>(),
+                                WantsToDropItem { item: entity },
+                            )
+                            .expect("Unable to insert intent");
+                        new_runstate = RunState::PlayerTurn;
+                    }
+                }
+            }
             RunState::Dead => {}
         }
 
@@ -166,6 +183,7 @@ fn main() -> BError {
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<WantsToDisplayContent>();
     gs.ecs.register::<WantsToDrinkPotion>();
+    gs.ecs.register::<WantsToDropItem>();
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.register::<WantsToPickupItem>();
 
