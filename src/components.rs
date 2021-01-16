@@ -14,6 +14,14 @@ pub struct CombatStats {
 }
 
 #[derive(Component, Debug)]
+pub struct HealEffect {
+    pub amount: i32,
+}
+
+#[derive(Component, Debug)]
+pub struct Item {}
+
+#[derive(Component, Debug)]
 pub struct Monster {}
 
 #[derive(Component, Debug)]
