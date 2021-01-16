@@ -38,6 +38,7 @@ pub enum RunState {
     PreRun,
     PlayerTurn,
     MonsterTurn,
+    ShowInventory,
     Dead,
 }
 
@@ -69,6 +70,29 @@ impl State {
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
         ctx.cls();
+
+        draw_map(&self.ecs, ctx);
+
+        {
+            let positions = self.ecs.read_storage::<Position>();
+            let renderables = self.ecs.read_storage::<Renderable>();
+            let player = self.ecs.read_storage::<Player>();
+            let map = self.ecs.fetch::<Map>();
+
+            for (pos, render) in (&positions, &renderables).join() {
+                if map.visible_tiles[pos.x as usize][pos.y as usize] {
+                    ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+                }
+            }
+
+            // Re-render the player, since we want them to always be on top of objects
+            for (pos, render, _player) in (&positions, &renderables, &player).join() {
+                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+            }
+
+            ui::draw_ui(&self.ecs, ctx);
+        }
+
         let mut new_runstate;
         {
             let runstate = self.ecs.fetch::<RunState>();
@@ -91,6 +115,20 @@ impl GameState for State {
                 self.run_systems();
                 new_runstate = RunState::AwaitingInput;
             }
+            RunState::ShowInventory => {
+                let result = ui::show_inventory(self, ctx);
+                match result {
+                    (ui::ItemMenuResult::Cancel, _) => new_runstate = RunState::AwaitingInput,
+                    (ui::ItemMenuResult::NoResponse, _) |
+                    (ui::ItemMenuResult::Selected, None)  => {},
+                    (ui::ItemMenuResult::Selected, Some(entity)) => {
+                        let names = self.ecs.read_storage::<Name>();
+                        let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
+                        gamelog.entries.push(format!("You use {}", names.get(entity).unwrap().name));
+                        new_runstate = RunState::AwaitingInput;
+                    }
+                }
+            }
             RunState::Dead => {}
         }
 
@@ -101,25 +139,6 @@ impl GameState for State {
 
         damage_system::delete_dead(&mut self.ecs);
 
-        draw_map(&self.ecs, ctx);
-
-        let positions = self.ecs.read_storage::<Position>();
-        let renderables = self.ecs.read_storage::<Renderable>();
-        let player = self.ecs.read_storage::<Player>();
-        let map = self.ecs.fetch::<Map>();
-
-        for (pos, render) in (&positions, &renderables).join() {
-            if map.visible_tiles[pos.x as usize][pos.y as usize] {
-                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
-            }
-        }
-
-        // Re-render the player, since we want them to always be on top of objects
-        for (pos, render, _player) in (&positions, &renderables, &player).join() {
-            ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
-        }
-
-        ui::draw_ui(&self.ecs, ctx);
     }
 }
 
