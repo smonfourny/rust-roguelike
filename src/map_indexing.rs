@@ -17,8 +17,8 @@ impl<'a> System<'a> for MapIndexingSystem {
         map.populate_blocked();
         map.clear_content();
         for (entity, pos) in (&entities, &position).join() {
-            let _p: Option<&BlocksTile> = blockers.get(entity);
-            if let Some(_) = _p {
+            let p: Option<&BlocksTile> = blockers.get(entity);
+            if p.is_some() {
                 map.blocked[pos.x as usize][pos.y as usize] = true;
             }
             map.tile_content[pos.x as usize][pos.y as usize].push(entity);
