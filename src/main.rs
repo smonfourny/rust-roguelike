@@ -81,18 +81,15 @@ impl GameState for State {
         {
             let positions = self.ecs.read_storage::<Position>();
             let renderables = self.ecs.read_storage::<Renderable>();
-            let player = self.ecs.read_storage::<Player>();
             let map = self.ecs.fetch::<Map>();
 
-            for (pos, render) in (&positions, &renderables).join() {
+            let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
+            data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
+
+            for (pos, render) in data.iter() {
                 if map.visible_tiles[pos.x as usize][pos.y as usize] {
                     ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
                 }
-            }
-
-            // Re-render the player, since we want them to always be on top of objects
-            for (pos, render, _player) in (&positions, &renderables, &player).join() {
-                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             }
 
             ui::draw_ui(&self.ecs, ctx);
