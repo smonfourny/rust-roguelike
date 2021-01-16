@@ -9,6 +9,7 @@ mod damage_system;
 mod gamelog;
 mod generator;
 mod inventory_system;
+mod item_listing_system;
 mod map;
 mod map_indexing;
 mod melee_system;
@@ -22,6 +23,7 @@ use components::*;
 use constants::*;
 use damage_system::DamageSystem;
 use gamelog::GameLog;
+use item_listing_system::ItemListingSystem;
 use inventory_system::ItemCollectionSystem;
 use map::{draw_map, Map};
 use map_indexing::MapIndexingSystem;
@@ -57,6 +59,8 @@ impl State {
         damage.run_now(&self.ecs);
         let mut pickup = ItemCollectionSystem {};
         pickup.run_now(&self.ecs);
+        let mut item_listing = ItemListingSystem {};
+        item_listing.run_now(&self.ecs);
 
         self.ecs.maintain();
     }
@@ -134,6 +138,7 @@ fn main() -> BError {
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
+    gs.ecs.register::<WantsToDisplayContent>();
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.register::<WantsToPickupItem>();
 

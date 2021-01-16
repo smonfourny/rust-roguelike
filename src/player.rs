@@ -2,7 +2,7 @@ use bracket_lib::prelude::*;
 use specs::prelude::*;
 use std::cmp::{max, min};
 
-use super::{CombatStats, GameLog, Item, Map, Player, Position, RunState, State, Viewshed, WantsToMelee, WantsToPickupItem };
+use super::{CombatStats, GameLog, Item, Map, Player, Position, RunState, State, Viewshed, WantsToDisplayContent, WantsToMelee, WantsToPickupItem };
 use super::{MAP_X, MAP_Y};
 
 fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
@@ -15,8 +15,10 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let mut players = ecs.write_storage::<Player>();
     let mut viewshed = ecs.write_storage::<Viewshed>();
     let combat_stats = ecs.read_storage::<CombatStats>();
+    let items = ecs.read_storage::<Item>();
     let entities = ecs.entities();
     let mut wants_to_melee = ecs.write_storage::<WantsToMelee>();
+    let mut wants_to_display = ecs.write_storage::<WantsToDisplayContent>();
     let map = ecs.fetch::<Map>();
 
     for (entity, _player, pos, viewshed) in
@@ -29,7 +31,7 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
             map.tile_content[destination_x as usize][destination_y as usize].iter()
         {
             let target = combat_stats.get(*potential_target);
-            if let Some(_target) = target {
+            if target.is_some() {
                 wants_to_melee
                     .insert(
                         entity,
@@ -39,6 +41,16 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
                     )
                     .expect("Add target failed");
                 return;
+            }
+
+            let item = items.get(*potential_target);
+            if item.is_some() {
+                wants_to_display
+                    .insert(
+                        *potential_target,
+                        WantsToDisplayContent {}
+                    )
+                    .expect("Add target failed");
             }
         }
 
