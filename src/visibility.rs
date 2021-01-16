@@ -29,7 +29,7 @@ impl<'a> System<'a> for VisibilitySystem {
 
                 // If this is the player, reveal visible tiles
                 let p: Option<&Player> = player.get(ent);
-                if let Some(_) = p {
+                if p.is_some() {
                     for line in map.visible_tiles.iter_mut() {
                         for t in line.iter_mut() {
                             *t = false;

@@ -19,7 +19,7 @@ impl<'a> System<'a> for MonsterAI {
 
     fn run(&mut self, data: Self::SystemData) {
         let (
-            mut map,
+            map,
             player_pos,
             player_entity,
             entities,
@@ -27,10 +27,12 @@ impl<'a> System<'a> for MonsterAI {
             monster,
             mut position,
             mut wants_to_melee,
-            runstate
+            runstate,
         ) = data;
 
-        if *runstate != RunState::MonsterTurn { return; }
+        if *runstate != RunState::MonsterTurn {
+            return;
+        }
 
         for (entity, mut viewshed, _monster, mut pos) in
             (&entities, &mut viewshed, &monster, &mut position).join()
@@ -52,7 +54,7 @@ impl<'a> System<'a> for MonsterAI {
                 let path = a_star_search(
                     map.xy_idx(pos.x, pos.y) as i32,
                     map.xy_idx(player_pos.x, player_pos.y) as i32,
-                    &mut *map,
+                    &*map,
                 );
                 if path.success && path.steps.len() > 1 {
                     pos.x = path.steps[1] as i32 % map.width;

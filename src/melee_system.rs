@@ -10,11 +10,12 @@ impl<'a> System<'a> for MeleeCombatSystem {
         ReadStorage<'a, Name>,
         ReadStorage<'a, CombatStats>,
         WriteStorage<'a, SufferDamage>,
-        WriteExpect<'a, GameLog>
+        WriteExpect<'a, GameLog>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut wants_melee, names, combat_stats, mut inflict_damage, mut gamelog) = data;
+        let (entities, mut wants_melee, names, combat_stats, mut inflict_damage, mut gamelog) =
+            data;
 
         for (_entity, wants_melee, name, stats) in
             (&entities, &wants_melee, &names, &combat_stats).join()

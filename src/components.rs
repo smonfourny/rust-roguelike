@@ -14,6 +14,19 @@ pub struct CombatStats {
 }
 
 #[derive(Component, Debug)]
+pub struct HealEffect {
+    pub amount: i32,
+}
+
+#[derive(Component, Debug, Clone)]
+pub struct InBackpack {
+    pub owner: Entity,
+}
+
+#[derive(Component, Debug)]
+pub struct Item {}
+
+#[derive(Component, Debug)]
 pub struct Monster {}
 
 #[derive(Component, Debug)]
@@ -63,6 +76,20 @@ pub struct Viewshed {
 }
 
 #[derive(Component, Debug, Clone)]
+pub struct WantsToDisplayContent {}
+
+#[derive(Component, Debug, Clone)]
+pub struct WantsToDrinkPotion {
+    pub potion: Entity,
+}
+
+#[derive(Component, Debug, Clone)]
 pub struct WantsToMelee {
     pub target: Entity,
+}
+
+#[derive(Component, Debug, Clone)]
+pub struct WantsToPickupItem {
+    pub collected_by: Entity,
+    pub item: Entity,
 }
