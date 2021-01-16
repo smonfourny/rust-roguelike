@@ -8,6 +8,7 @@ mod constants;
 mod damage_system;
 mod gamelog;
 mod generator;
+mod inventory_system;
 mod map;
 mod map_indexing;
 mod melee_system;
@@ -21,6 +22,7 @@ use components::*;
 use constants::*;
 use damage_system::DamageSystem;
 use gamelog::GameLog;
+use inventory_system::ItemCollectionSystem;
 use map::{draw_map, Map};
 use map_indexing::MapIndexingSystem;
 use melee_system::MeleeCombatSystem;
@@ -53,6 +55,8 @@ impl State {
         melee.run_now(&self.ecs);
         let mut damage = DamageSystem {};
         damage.run_now(&self.ecs);
+        let mut pickup = ItemCollectionSystem {};
+        pickup.run_now(&self.ecs);
 
         self.ecs.maintain();
     }
@@ -97,12 +101,18 @@ impl GameState for State {
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
+        let player = self.ecs.read_storage::<Player>();
         let map = self.ecs.fetch::<Map>();
 
         for (pos, render) in (&positions, &renderables).join() {
             if map.visible_tiles[pos.x as usize][pos.y as usize] {
                 ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             }
+        }
+
+        // Re-render the player, since we want them to always be on top of objects
+        for (pos, render, _player) in (&positions, &renderables, &player).join() {
+            ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
         }
 
         ui::draw_ui(&self.ecs, ctx);
@@ -114,16 +124,18 @@ fn main() -> BError {
     let mut gs = State { ecs: World::new() };
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
-    gs.ecs.register::<Position>();
-    gs.ecs.register::<Renderable>();
-    gs.ecs.register::<Player>();
     gs.ecs.register::<HealEffect>();
+    gs.ecs.register::<InBackpack>();
     gs.ecs.register::<Item>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
+    gs.ecs.register::<Player>();
+    gs.ecs.register::<Position>();
+    gs.ecs.register::<Renderable>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<WantsToMelee>();
+    gs.ecs.register::<WantsToPickupItem>();
 
     gs.ecs.insert(RandomNumberGenerator::new());
 
