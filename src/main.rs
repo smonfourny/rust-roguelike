@@ -35,6 +35,7 @@ pub enum RunState {
     PreRun,
     PlayerTurn,
     MonsterTurn,
+    Dead
 }
 
 pub struct State {
@@ -83,6 +84,7 @@ impl GameState for State {
                 self.run_systems();
                 new_runstate = RunState::AwaitingInput;
             }
+            RunState::Dead => { }
         }
 
         {
