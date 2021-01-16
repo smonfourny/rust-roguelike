@@ -1,6 +1,7 @@
 use super::{
-    BlocksTile, CombatStats, HealEffect, Item, Monster, Name, Player, Position, Rect, Renderable, Viewshed,
-    BASE_BG_COLOR, BROWN_SHIRT_COLOR, MAX_ITEMS_PER_ROOM, MAX_MONSTERS_PER_ROOM, PLAYER_COLOR, PURPLE_COLOR
+    BlocksTile, CombatStats, HealEffect, Item, Monster, Name, Player, Position, Rect, Renderable,
+    Viewshed, BASE_BG_COLOR, BROWN_SHIRT_COLOR, MAX_ITEMS_PER_ROOM, MAX_MONSTERS_PER_ROOM,
+    PLAYER_COLOR, PURPLE_COLOR,
 };
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -123,16 +124,18 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: FontCharType, na
         .build();
 }
 
-fn health_potion(ecs: &mut World, x: i32, y:i32) {
+fn health_potion(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
         .with(Position { x, y })
-        .with(Renderable{
+        .with(Renderable {
             glyph: to_cp437('i'),
             fg: RGB::named(PURPLE_COLOR),
-            bg: RGB::named(BASE_BG_COLOR)
+            bg: RGB::named(BASE_BG_COLOR),
         })
-        .with(Name { name: "Health Potion".to_string() })
-        .with(Item{})
-        .with(HealEffect{ amount: 8 })
+        .with(Name {
+            name: "Health Potion".to_string(),
+        })
+        .with(Item {})
+        .with(HealEffect { amount: 8 })
         .build();
 }

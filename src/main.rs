@@ -23,8 +23,8 @@ use components::*;
 use constants::*;
 use damage_system::DamageSystem;
 use gamelog::GameLog;
-use item_listing_system::ItemListingSystem;
 use inventory_system::*;
+use item_listing_system::ItemListingSystem;
 use map::{draw_map, Map};
 use map_indexing::MapIndexingSystem;
 use melee_system::MeleeCombatSystem;
@@ -124,11 +124,15 @@ impl GameState for State {
                 let result = ui::show_inventory(self, ctx);
                 match result {
                     (ui::ItemMenuResult::Cancel, _) => new_runstate = RunState::AwaitingInput,
-                    (ui::ItemMenuResult::NoResponse, _) |
-                    (ui::ItemMenuResult::Selected, None)  => {},
+                    (ui::ItemMenuResult::NoResponse, _) | (ui::ItemMenuResult::Selected, None) => {}
                     (ui::ItemMenuResult::Selected, Some(entity)) => {
                         let mut intent = self.ecs.write_storage::<WantsToDrinkPotion>();
-                        intent.insert(*self.ecs.fetch::<Entity>(), WantsToDrinkPotion{ potion: entity }).expect("Unable to insert intent");
+                        intent
+                            .insert(
+                                *self.ecs.fetch::<Entity>(),
+                                WantsToDrinkPotion { potion: entity },
+                            )
+                            .expect("Unable to insert intent");
                         new_runstate = RunState::PlayerTurn;
                     }
                 }
@@ -142,7 +146,6 @@ impl GameState for State {
         }
 
         damage_system::delete_dead(&mut self.ecs);
-
     }
 }
 

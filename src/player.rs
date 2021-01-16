@@ -2,7 +2,10 @@ use bracket_lib::prelude::*;
 use specs::prelude::*;
 use std::cmp::{max, min};
 
-use super::{CombatStats, GameLog, Item, Map, Player, Position, RunState, State, Viewshed, WantsToDisplayContent, WantsToMelee, WantsToPickupItem };
+use super::{
+    CombatStats, GameLog, Item, Map, Player, Position, RunState, State, Viewshed,
+    WantsToDisplayContent, WantsToMelee, WantsToPickupItem,
+};
 use super::{MAP_X, MAP_Y};
 
 fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
@@ -46,10 +49,7 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
             let item = items.get(*potential_target);
             if item.is_some() {
                 wants_to_display
-                    .insert(
-                        *potential_target,
-                        WantsToDisplayContent {}
-                    )
+                    .insert(*potential_target, WantsToDisplayContent {})
                     .expect("Add target failed");
             }
         }
@@ -83,13 +83,22 @@ fn get_item(ecs: &mut World) {
     }
 
     match target_item {
-        None => gamelog.entries.push("There is nothing to pick up here.".to_string()),
+        None => gamelog
+            .entries
+            .push("There is nothing to pick up here.".to_string()),
         Some(item) => {
             let mut pickup = ecs.write_storage::<WantsToPickupItem>();
-            pickup.insert(*player_entity, WantsToPickupItem{ collected_by: *player_entity, item }).expect("Unable to insert want to pickup");
+            pickup
+                .insert(
+                    *player_entity,
+                    WantsToPickupItem {
+                        collected_by: *player_entity,
+                        item,
+                    },
+                )
+                .expect("Unable to insert want to pickup");
         }
     }
-
 }
 
 pub fn player_input(gs: &mut State, ctx: &mut BTerm) -> RunState {

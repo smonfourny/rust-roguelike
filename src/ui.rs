@@ -1,6 +1,7 @@
 use super::{
-    CombatStats, GameLog, InBackpack, Name, Player, State, BASE_BG_COLOR, CYAN_COLOR, HEALTHBAR_OFFSET, HEALTH_OFFSET,
-    LOG_OFFSET, MAP_X, MAP_Y, ORANGE_COLOR, RED_COLOR, WHITE_COLOR, YELLOW_COLOR
+    CombatStats, GameLog, InBackpack, Name, Player, State, BASE_BG_COLOR, CYAN_COLOR,
+    HEALTHBAR_OFFSET, HEALTH_OFFSET, LOG_OFFSET, MAP_X, MAP_Y, ORANGE_COLOR, RED_COLOR,
+    WHITE_COLOR, YELLOW_COLOR,
 };
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -54,7 +55,11 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
 }
 
 #[derive(PartialEq, Copy, Clone)]
-pub enum ItemMenuResult { Cancel, NoResponse, Selected }
+pub enum ItemMenuResult {
+    Cancel,
+    NoResponse,
+    Selected,
+}
 
 pub fn show_inventory(gs: &mut State, ctx: &mut BTerm) -> (ItemMenuResult, Option<Entity>) {
     let player_entity = gs.ecs.fetch::<Entity>();
@@ -62,22 +67,64 @@ pub fn show_inventory(gs: &mut State, ctx: &mut BTerm) -> (ItemMenuResult, Optio
     let backpack = gs.ecs.read_storage::<InBackpack>();
     let entities = gs.ecs.entities();
 
-    let inventory = (&backpack, &names).join().filter(|item| item.0.owner == *player_entity);
+    let inventory = (&backpack, &names)
+        .join()
+        .filter(|item| item.0.owner == *player_entity);
     let count = inventory.count();
 
     // For now, the list of items should be small.
     // TODO: once the player is able to collect more items, make this pageable
     let y = (25 - (count / 2)) as i32;
-    ctx.draw_box(15, y - 2, 31, (count+3) as i32, RGB::named(WHITE_COLOR), RGB::named(BASE_BG_COLOR));
-    ctx.print_color(17, y - 2, RGB::named(WHITE_COLOR), RGB::named(BASE_BG_COLOR), "Inventory");
-    ctx.print_color(17, y + count as i32 + 1, RGB::named(RED_COLOR), RGB::named(BASE_BG_COLOR), "Esc to close");
-
+    ctx.draw_box(
+        15,
+        y - 2,
+        31,
+        (count + 3) as i32,
+        RGB::named(WHITE_COLOR),
+        RGB::named(BASE_BG_COLOR),
+    );
+    ctx.print_color(
+        17,
+        y - 2,
+        RGB::named(WHITE_COLOR),
+        RGB::named(BASE_BG_COLOR),
+        "Inventory",
+    );
+    ctx.print_color(
+        17,
+        y + count as i32 + 1,
+        RGB::named(RED_COLOR),
+        RGB::named(BASE_BG_COLOR),
+        "Esc to close",
+    );
 
     let mut equippable: Vec<Entity> = Vec::new();
-    for (j, (entity, _pack, name)) in (&entities, &backpack, &names).join().filter(|item| item.1.owner == *player_entity).enumerate() {
-        ctx.set(17, y + j as i32, RGB::named(WHITE_COLOR), RGB::named(BASE_BG_COLOR), to_cp437('('));
-        ctx.set(18, y + j as i32, RGB::named(YELLOW_COLOR), RGB::named(BASE_BG_COLOR), (97 + j as i32) as FontCharType);
-        ctx.set(19, y + j as i32, RGB::named(WHITE_COLOR), RGB::named(BASE_BG_COLOR), to_cp437(')'));
+    for (j, (entity, _pack, name)) in (&entities, &backpack, &names)
+        .join()
+        .filter(|item| item.1.owner == *player_entity)
+        .enumerate()
+    {
+        ctx.set(
+            17,
+            y + j as i32,
+            RGB::named(WHITE_COLOR),
+            RGB::named(BASE_BG_COLOR),
+            to_cp437('('),
+        );
+        ctx.set(
+            18,
+            y + j as i32,
+            RGB::named(YELLOW_COLOR),
+            RGB::named(BASE_BG_COLOR),
+            (97 + j as i32) as FontCharType,
+        );
+        ctx.set(
+            19,
+            y + j as i32,
+            RGB::named(WHITE_COLOR),
+            RGB::named(BASE_BG_COLOR),
+            to_cp437(')'),
+        );
 
         ctx.print(21, y + j as i32, &name.name.to_string());
         equippable.push(entity);
@@ -85,19 +132,19 @@ pub fn show_inventory(gs: &mut State, ctx: &mut BTerm) -> (ItemMenuResult, Optio
 
     match ctx.key {
         None => (ItemMenuResult::NoResponse, None),
-        Some(key) => {
-            match key {
-                VirtualKeyCode::Escape => (ItemMenuResult::Cancel, None),
-                _ => {
-                    let selection = letter_to_option(key);
-                    if selection > -1 && selection < count as i32 {
-                        return (ItemMenuResult::Selected, Some(equippable[selection as usize]))
-                    }
-
-                    (ItemMenuResult::NoResponse, None)
+        Some(key) => match key {
+            VirtualKeyCode::Escape => (ItemMenuResult::Cancel, None),
+            _ => {
+                let selection = letter_to_option(key);
+                if selection > -1 && selection < count as i32 {
+                    return (
+                        ItemMenuResult::Selected,
+                        Some(equippable[selection as usize]),
+                    );
                 }
-            }
-        }
-    }
 
+                (ItemMenuResult::NoResponse, None)
+            }
+        },
+    }
 }
