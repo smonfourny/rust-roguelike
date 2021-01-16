@@ -38,7 +38,7 @@ pub fn delete_dead(ecs: &mut World) {
                             *runwriter = RunState::Dead;
                             gamelog.entries.push(format!("You are dead!"));
                         }
-                    },
+                    }
                 }
             }
         }

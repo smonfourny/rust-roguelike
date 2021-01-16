@@ -27,10 +27,12 @@ impl<'a> System<'a> for MonsterAI {
             monster,
             mut position,
             mut wants_to_melee,
-            runstate
+            runstate,
         ) = data;
 
-        if *runstate != RunState::MonsterTurn { return; }
+        if *runstate != RunState::MonsterTurn {
+            return;
+        }
 
         for (entity, mut viewshed, _monster, mut pos) in
             (&entities, &mut viewshed, &monster, &mut position).join()

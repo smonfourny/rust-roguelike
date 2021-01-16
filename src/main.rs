@@ -7,6 +7,7 @@ mod components;
 mod constants;
 mod damage_system;
 mod gamelog;
+mod generator;
 mod map;
 mod map_indexing;
 mod melee_system;
@@ -27,6 +28,7 @@ use map::{draw_map, Map};
 use map_indexing::MapIndexingSystem;
 use melee_system::MeleeCombatSystem;
 use player::player_input;
+use rect::Rect;
 use visibility::VisibilitySystem;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -35,7 +37,7 @@ pub enum RunState {
     PreRun,
     PlayerTurn,
     MonsterTurn,
-    Dead
+    Dead,
 }
 
 pub struct State {
@@ -84,7 +86,7 @@ impl GameState for State {
                 self.run_systems();
                 new_runstate = RunState::AwaitingInput;
             }
-            RunState::Dead => { }
+            RunState::Dead => {}
         }
 
         {
@@ -124,86 +126,23 @@ fn main() -> BError {
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<WantsToMelee>();
 
+    gs.ecs.insert(RandomNumberGenerator::new());
+
     let map = Map::new_map(MAP_X, MAP_Y);
     let (player_x, player_y) = map.rooms[0].center();
-    let player_entity = gs
-        .ecs
-        .create_entity()
-        .with(Position {
-            x: player_x,
-            y: player_y,
-        })
-        .with(Renderable {
-            glyph: to_cp437('@'),
-            fg: RGB::named(PLAYER_COLOR),
-            bg: RGB::named(BASE_BG_COLOR),
-        })
-        .with(Player {})
-        .with(Viewshed {
-            visible_tiles: Vec::new(),
-            range: 8,
-            dirty: true,
-        })
-        .with(Name {
-            name: "Player".to_string(),
-        })
-        .with(CombatStats {
-            max_hp: 30,
-            hp: 30,
-            defense: 2,
-            attack: 5,
-        })
-        .build();
+    let player_entity = generator::spawn_player(&mut gs.ecs, player_x, player_y);
 
     gs.ecs.insert(player_entity);
 
-    for (i, room) in map.rooms.iter().skip(1).enumerate() {
-        let (x, y) = room.center();
-
-        let mut rng = RandomNumberGenerator::new();
-        let glyph: FontCharType;
-        let name: String;
-        match rng.roll_dice(1, 2) {
-            1 => {
-                glyph = to_cp437('o');
-                name = "Orc".to_string();
-            }
-            _ => {
-                glyph = to_cp437('g');
-                name = "Goblin".to_string();
-            }
-        };
-
-        gs.ecs
-            .create_entity()
-            .with(Position { x, y })
-            .with(Renderable {
-                glyph,
-                fg: RGB::named(BROWN_SHIRT_COLOR),
-                bg: RGB::named(BASE_BG_COLOR),
-            })
-            .with(Viewshed {
-                visible_tiles: Vec::new(),
-                range: 6,
-                dirty: true,
-            })
-            .with(Monster {})
-            .with(Name {
-                name: format!("{} {}", &name, i),
-            })
-            .with(CombatStats {
-                max_hp: 15,
-                hp: 15,
-                defense: 1,
-                attack: 4,
-            })
-            .with(BlocksTile {})
-            .build();
+    for room in map.rooms.iter().skip(1) {
+        generator::spawn_room_contents(&mut gs.ecs, room);
     }
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(RunState::PreRun);
-    gs.ecs.insert(gamelog::GameLog{ entries: vec!["Welcome, traveller.".to_string()] });
+    gs.ecs.insert(gamelog::GameLog {
+        entries: vec!["Welcome, traveller.".to_string()],
+    });
 
     main_loop(context, gs)
 }
