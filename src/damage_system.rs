@@ -1,4 +1,4 @@
-use super::{console, CombatStats, Player, SufferDamage};
+use super::{CombatStats, GameLog, Player, RunState, SufferDamage};
 use specs::prelude::*;
 
 pub struct DamageSystem {}
@@ -31,7 +31,14 @@ pub fn delete_dead(ecs: &mut World) {
                 let player = players.get(entity);
                 match player {
                     None => dead.push(entity),
-                    Some(_) => console::log("You are dead"),
+                    Some(_) => {
+                        let mut gamelog = ecs.write_resource::<GameLog>();
+                        let mut runwriter = ecs.write_resource::<RunState>();
+                        if *runwriter != RunState::Dead {
+                            *runwriter = RunState::Dead;
+                            gamelog.entries.push(format!("You are dead!"));
+                        }
+                    },
                 }
             }
         }

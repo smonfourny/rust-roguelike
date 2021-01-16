@@ -6,6 +6,9 @@ use super::{CombatStats, Map, Player, Position, RunState, State, Viewshed, Wants
 use super::{MAP_X, MAP_Y};
 
 fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
+    let runstate = ecs.fetch::<RunState>();
+    if RunState::Dead == *runstate { return; }
+
     let mut positions = ecs.write_storage::<Position>();
     let mut players = ecs.write_storage::<Player>();
     let mut viewshed = ecs.write_storage::<Viewshed>();
@@ -13,6 +16,7 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let entities = ecs.entities();
     let mut wants_to_melee = ecs.write_storage::<WantsToMelee>();
     let map = ecs.fetch::<Map>();
+
 
     for (entity, _player, pos, viewshed) in
         (&entities, &mut players, &mut positions, &mut viewshed).join()
