@@ -1,6 +1,6 @@
 use super::{
-    BlocksTile, CombatStats, Monster, Name, Player, Position, Rect, Renderable, Viewshed,
-    BASE_BG_COLOR, BROWN_SHIRT_COLOR, MAX_MONSTERS_PER_ROOM, PLAYER_COLOR,
+    BlocksTile, CombatStats, HealEffect, Item, Monster, Name, Player, Position, Rect, Renderable, Viewshed,
+    BASE_BG_COLOR, BROWN_SHIRT_COLOR, MAX_ITEMS_PER_ROOM, MAX_MONSTERS_PER_ROOM, PLAYER_COLOR, PURPLE_COLOR
 };
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -37,10 +37,12 @@ pub fn spawn_player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
 
 pub fn spawn_room_contents(ecs: &mut World, room: &Rect) {
     let mut monster_spawn_points: Vec<(usize, usize)> = Vec::new();
+    let mut item_spawn_points: Vec<(usize, usize)> = Vec::new();
 
     {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
         let num_monsters = rng.roll_dice(1, MAX_MONSTERS_PER_ROOM + 2) - 3;
+        let num_items = rng.roll_dice(1, MAX_ITEMS_PER_ROOM + 2) - 3;
 
         for _i in 0..num_monsters {
             loop {
@@ -52,10 +54,25 @@ pub fn spawn_room_contents(ecs: &mut World, room: &Rect) {
                 }
             }
         }
+
+        for _i in 0..num_items {
+            loop {
+                let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
+                let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
+                if !item_spawn_points.contains(&(x, y)) {
+                    item_spawn_points.push((x, y));
+                    break;
+                }
+            }
+        }
     }
 
     for (x, y) in monster_spawn_points.iter() {
         random_monster(ecs, *x as i32, *y as i32);
+    }
+
+    for (x, y) in item_spawn_points.iter() {
+        health_potion(ecs, *x as i32, *y as i32);
     }
 }
 
@@ -103,5 +120,19 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: FontCharType, na
             attack: 4,
         })
         .with(BlocksTile {})
+        .build();
+}
+
+fn health_potion(ecs: &mut World, x: i32, y:i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable{
+            glyph: to_cp437('i'),
+            fg: RGB::named(PURPLE_COLOR),
+            bg: RGB::named(BASE_BG_COLOR)
+        })
+        .with(Name { name: "Health Potion".to_string() })
+        .with(Item{})
+        .with(HealEffect{ amount: 8 })
         .build();
 }

@@ -17,10 +17,7 @@ mod ui;
 mod visibility;
 
 use ai::MonsterAI;
-use components::{
-    BlocksTile, CombatStats, Monster, Name, Player, Position, Renderable, SufferDamage, Viewshed,
-    WantsToMelee,
-};
+use components::*;
 use constants::*;
 use damage_system::DamageSystem;
 use gamelog::GameLog;
@@ -120,6 +117,8 @@ fn main() -> BError {
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<HealEffect>();
+    gs.ecs.register::<Item>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
     gs.ecs.register::<SufferDamage>();

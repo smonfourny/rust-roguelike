@@ -23,4 +23,4 @@ pub static HEALTHBAR_OFFSET: i32 = 24;
 pub static LOG_OFFSET: i32 = 2;
 
 pub static MAX_MONSTERS_PER_ROOM: i32 = 4;
-pub static MAX_ITEMS: i32 = 2;
+pub static MAX_ITEMS_PER_ROOM: i32 = 2;
