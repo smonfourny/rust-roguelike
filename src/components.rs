@@ -79,6 +79,11 @@ pub struct Viewshed {
 pub struct WantsToDisplayContent {}
 
 #[derive(Component, Debug, Clone)]
+pub struct WantsToDrinkPotion {
+    pub potion: Entity
+}
+
+#[derive(Component, Debug, Clone)]
 pub struct WantsToMelee {
     pub target: Entity,
 }
