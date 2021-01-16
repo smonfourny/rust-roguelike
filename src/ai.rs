@@ -1,4 +1,4 @@
-use super::{Map, Monster, Point, Position, Viewshed, WantsToMelee};
+use super::{Map, Monster, Point, Position, RunState, Viewshed, WantsToMelee};
 use bracket_lib::prelude::*;
 use specs::prelude::*;
 
@@ -14,6 +14,7 @@ impl<'a> System<'a> for MonsterAI {
         ReadStorage<'a, Monster>,
         WriteStorage<'a, Position>,
         WriteStorage<'a, WantsToMelee>,
+        ReadExpect<'a, RunState>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -26,7 +27,10 @@ impl<'a> System<'a> for MonsterAI {
             monster,
             mut position,
             mut wants_to_melee,
+            runstate
         ) = data;
+
+        if *runstate != RunState::MonsterTurn { return; }
 
         for (entity, mut viewshed, _monster, mut pos) in
             (&entities, &mut viewshed, &monster, &mut position).join()
