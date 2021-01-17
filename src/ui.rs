@@ -61,6 +61,12 @@ pub enum ItemMenuResult {
     Selected,
 }
 
+#[derive(PartialEq, Copy, Clone)]
+pub enum CharacterMenuResult {
+    Cancel,
+    NoResponse,
+}
+
 pub fn show_inventory(gs: &mut State, ctx: &mut BTerm) -> (ItemMenuResult, Option<Entity>) {
     show_item_menu(gs, ctx, "Inventory")
 }
@@ -157,6 +163,52 @@ fn show_item_menu<S: ToString>(
 
                 (ItemMenuResult::NoResponse, None)
             }
+        },
+    }
+}
+
+pub fn show_character(gs: &mut State, ctx: &mut BTerm) -> CharacterMenuResult {
+    let players = gs.ecs.read_storage::<Player>();
+    let combat_stats = gs.ecs.read_storage::<CombatStats>();
+    let names = gs.ecs.read_storage::<Name>();
+
+    let y: i32 = 23;
+
+    ctx.draw_box(
+        15,
+        y - 2,
+        31,
+        7,
+        RGB::named(WHITE_COLOR),
+        RGB::named(BASE_BG_COLOR),
+    );
+    ctx.print_color(
+        17,
+        y + 4 as i32 + 1,
+        RGB::named(RED_COLOR),
+        RGB::named(BASE_BG_COLOR),
+        "Esc to close",
+    );
+
+    for (_player, combat_stat, name) in (&players, &combat_stats, &names).join() {
+        ctx.print_color(
+            17,
+            y - 2,
+            RGB::named(WHITE_COLOR),
+            RGB::named(BASE_BG_COLOR),
+            &name.name,
+        );
+        ctx.print(17, y, format!("Strength {}", combat_stat.strength));
+        ctx.print(17, y + 1, format!("Agility {}", combat_stat.agility));
+        ctx.print(17, y + 2, format!("Vitality {}", combat_stat.vitality));
+        ctx.print(17, y + 3, format!("Magic {}", combat_stat.magic));
+    }
+
+    match ctx.key {
+        None => CharacterMenuResult::NoResponse,
+        Some(key) => match key {
+            VirtualKeyCode::Escape => CharacterMenuResult::Cancel,
+            _ => CharacterMenuResult::NoResponse,
         },
     }
 }
