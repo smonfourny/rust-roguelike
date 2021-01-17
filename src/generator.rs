@@ -29,10 +29,14 @@ pub fn spawn_player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
             name: "Player".to_string(),
         })
         .with(CombatStats {
-            max_hp: 30,
-            hp: 30,
-            defense: 2,
-            attack: 5,
+            max_hp: 5 * 6,
+            hp: 5 * 6,
+            level: 1,
+            exp: 0,
+            strength: 5,
+            agility: 2,
+            vitality: 6,
+            magic: 2,
         })
         .build()
 }
@@ -105,7 +109,7 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: FontCharType, na
             glyph,
             fg: RGB::named(BROWN_SHIRT_COLOR),
             bg: RGB::named(BASE_BG_COLOR),
-            render_order: 1
+            render_order: 1,
         })
         .with(Viewshed {
             visible_tiles: Vec::new(),
@@ -117,10 +121,14 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: FontCharType, na
             name: name.to_string(),
         })
         .with(CombatStats {
-            max_hp: 15,
-            hp: 15,
-            defense: 1,
-            attack: 4,
+            max_hp: 5 * 3,
+            hp: 5 * 3,
+            level: 1,
+            exp: 0,
+            strength: 4,
+            agility: 1,
+            vitality: 3,
+            magic: 0,
         })
         .with(BlocksTile {})
         .build();
@@ -133,7 +141,7 @@ fn health_potion(ecs: &mut World, x: i32, y: i32) {
             glyph: to_cp437('i'),
             fg: RGB::named(PURPLE_COLOR),
             bg: RGB::named(BASE_BG_COLOR),
-            render_order: 2
+            render_order: 2,
         })
         .with(Name {
             name: "Health Potion".to_string(),

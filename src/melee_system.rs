@@ -25,7 +25,7 @@ impl<'a> System<'a> for MeleeCombatSystem {
                 if target_stats.hp > 0 {
                     let target_name = names.get(wants_melee.target).unwrap();
 
-                    let damage = i32::max(0, stats.attack - target_stats.defense);
+                    let damage = i32::max(0, stats.strength - target_stats.agility);
 
                     if damage == 0 {
                         gamelog.entries.push(format!(

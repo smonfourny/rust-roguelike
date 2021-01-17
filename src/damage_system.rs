@@ -1,4 +1,4 @@
-use super::{CombatStats, GameLog, Player, RunState, SufferDamage};
+use super::{CombatStats, GameLog, Player, RandomNumberGenerator, RunState, SufferDamage};
 use specs::prelude::*;
 
 pub struct DamageSystem {}
@@ -7,13 +7,41 @@ impl<'a> System<'a> for DamageSystem {
     type SystemData = (
         WriteStorage<'a, CombatStats>,
         WriteStorage<'a, SufferDamage>,
+        ReadExpect<'a, Entity>,
+        WriteExpect<'a, GameLog>,
+        WriteExpect<'a, RandomNumberGenerator>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut stats, mut damage) = data;
+        let (mut stats, mut damage, player, mut gamelog, mut rng) = data;
+
+        let mut exp_gain = 0;
 
         for (mut stats, damage) in (&mut stats, &damage).join() {
             stats.hp -= damage.amount.iter().sum::<i32>();
+
+            if stats.hp < 1 {
+                exp_gain += 15 * stats.level;
+            }
+        }
+
+        if let Some(player_stats) = stats.get_mut(*player) {
+            let mut new_exp = player_stats.exp + exp_gain;
+            while new_exp >= 100 * player_stats.level {
+                new_exp -= 100 * player_stats.level;
+                player_stats.level += 1;
+
+                // Increase stats
+                player_stats.strength += rng.roll_dice(1, 2) - 1;
+                player_stats.agility += rng.roll_dice(1, 2) - 1;
+                player_stats.vitality += rng.roll_dice(1, 2) - 1;
+                player_stats.magic += rng.roll_dice(1, 2) - 1;
+
+                player_stats.max_hp = player_stats.vitality * 5;
+
+                gamelog.entries.push("You feel stronger.".to_string());
+            }
+            player_stats.exp = new_exp;
         }
 
         damage.clear();
