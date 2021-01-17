@@ -11,6 +11,7 @@ class IndexPage extends React.Component {
           <p className="px-6 font-light mb-4">Press the arrow keys to move your character.</p>
           <ul>
             <li className="px-6"><strong>g</strong> - Pick up item</li>
+            <li className="px-6"><strong>d</strong> - Drop item</li>
             <li className="px-6"><strong>i</strong> - Open inventory</li>
           </ul>
           <div className="p-6 flex justify-center">
