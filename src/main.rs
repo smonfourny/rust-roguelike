@@ -40,6 +40,7 @@ pub enum RunState {
     MonsterTurn,
     ShowInventory,
     ShowDropItem,
+    ShowCharacter,
     Dead,
 }
 
@@ -152,6 +153,13 @@ impl GameState for State {
                             .expect("Unable to insert intent");
                         new_runstate = RunState::PlayerTurn;
                     }
+                }
+            }
+            RunState::ShowCharacter => {
+                let result = ui::show_character(self, ctx);
+                match result {
+                    ui::CharacterMenuResult::Cancel => new_runstate = RunState::AwaitingInput,
+                    _ => {}
                 }
             }
             RunState::Dead => {}

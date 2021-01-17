@@ -1,7 +1,7 @@
 use super::{
     CombatStats, GameLog, InBackpack, Name, Player, State, BASE_BG_COLOR, CYAN_COLOR,
-    HEALTHBAR_OFFSET, HEALTH_OFFSET, LOG_OFFSET, MAP_X, MAP_Y, ORANGE_COLOR, RED_COLOR,
-    WHITE_COLOR, YELLOW_COLOR,
+    EXPBAR_OFFSET, EXP_OFFSET, HEALTHBAR_OFFSET, HEALTH_OFFSET, LOG_OFFSET, MAP_X, MAP_Y,
+    ORANGE_COLOR, PURPLE_COLOR, RED_COLOR, WHITE_COLOR, YELLOW_COLOR,
 };
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -40,10 +40,29 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
         ctx.draw_bar_horizontal(
             HEALTHBAR_OFFSET,
             MAP_Y,
-            HEALTHBAR_OFFSET + 20,
+            10,
             stats.hp,
             stats.max_hp,
             RGB::named(health_color),
+            RGB::named(BASE_BG_COLOR),
+        );
+
+        let exp_message = format!(" EXP: {}/{}", stats.exp, stats.level * 100);
+        ctx.print_color(
+            EXP_OFFSET,
+            MAP_Y,
+            RGB::named(PURPLE_COLOR),
+            RGB::named(BASE_BG_COLOR),
+            &exp_message,
+        );
+
+        ctx.draw_bar_horizontal(
+            EXPBAR_OFFSET,
+            MAP_Y,
+            10,
+            stats.exp,
+            stats.level * 100,
+            RGB::named(PURPLE_COLOR),
             RGB::named(BASE_BG_COLOR),
         );
     }
@@ -59,6 +78,12 @@ pub enum ItemMenuResult {
     Cancel,
     NoResponse,
     Selected,
+}
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum CharacterMenuResult {
+    Cancel,
+    NoResponse,
 }
 
 pub fn show_inventory(gs: &mut State, ctx: &mut BTerm) -> (ItemMenuResult, Option<Entity>) {
@@ -157,6 +182,54 @@ fn show_item_menu<S: ToString>(
 
                 (ItemMenuResult::NoResponse, None)
             }
+        },
+    }
+}
+
+pub fn show_character(gs: &mut State, ctx: &mut BTerm) -> CharacterMenuResult {
+    let players = gs.ecs.read_storage::<Player>();
+    let combat_stats = gs.ecs.read_storage::<CombatStats>();
+    let names = gs.ecs.read_storage::<Name>();
+
+    let stat_count: i32 = 6;
+    let y = (25 - (stat_count / 2)) as i32;
+
+    ctx.draw_box(
+        15,
+        y - 2,
+        31,
+        stat_count + 3,
+        RGB::named(WHITE_COLOR),
+        RGB::named(BASE_BG_COLOR),
+    );
+    ctx.print_color(
+        17,
+        y + stat_count as i32 + 1,
+        RGB::named(RED_COLOR),
+        RGB::named(BASE_BG_COLOR),
+        "Esc to close",
+    );
+
+    for (_player, combat_stat, name) in (&players, &combat_stats, &names).join() {
+        ctx.print_color(
+            17,
+            y - 2,
+            RGB::named(WHITE_COLOR),
+            RGB::named(BASE_BG_COLOR),
+            &name.name,
+        );
+        ctx.print(17, y, format!("Level {}", combat_stat.level));
+        ctx.print(17, y + 2, format!("Strength {}", combat_stat.strength));
+        ctx.print(17, y + 3, format!("Agility {}", combat_stat.agility));
+        ctx.print(17, y + 4, format!("Vitality {}", combat_stat.vitality));
+        ctx.print(17, y + 5, format!("Magic {}", combat_stat.magic));
+    }
+
+    match ctx.key {
+        None => CharacterMenuResult::NoResponse,
+        Some(key) => match key {
+            VirtualKeyCode::Escape => CharacterMenuResult::Cancel,
+            _ => CharacterMenuResult::NoResponse,
         },
     }
 }
