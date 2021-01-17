@@ -31,6 +31,8 @@ pub fn spawn_player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
         .with(CombatStats {
             max_hp: 5 * 6,
             hp: 5 * 6,
+            level: 1,
+            exp: 0,
             strength: 5,
             agility: 2,
             vitality: 6,
@@ -121,6 +123,8 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: FontCharType, na
         .with(CombatStats {
             max_hp: 5 * 3,
             hp: 5 * 3,
+            level: 1,
+            exp: 0,
             strength: 4,
             agility: 1,
             vitality: 3,

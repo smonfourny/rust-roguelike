@@ -1,7 +1,7 @@
 use super::{
     CombatStats, GameLog, InBackpack, Name, Player, State, BASE_BG_COLOR, CYAN_COLOR,
-    HEALTHBAR_OFFSET, HEALTH_OFFSET, LOG_OFFSET, MAP_X, MAP_Y, ORANGE_COLOR, RED_COLOR,
-    WHITE_COLOR, YELLOW_COLOR,
+    EXPBAR_OFFSET, EXP_OFFSET, HEALTHBAR_OFFSET, HEALTH_OFFSET, LOG_OFFSET, MAP_X, MAP_Y,
+    ORANGE_COLOR, PURPLE_COLOR, RED_COLOR, WHITE_COLOR, YELLOW_COLOR,
 };
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -40,10 +40,29 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
         ctx.draw_bar_horizontal(
             HEALTHBAR_OFFSET,
             MAP_Y,
-            HEALTHBAR_OFFSET + 20,
+            10,
             stats.hp,
             stats.max_hp,
             RGB::named(health_color),
+            RGB::named(BASE_BG_COLOR),
+        );
+
+        let exp_message = format!(" EXP: {}/{}", stats.exp, 100);
+        ctx.print_color(
+            EXP_OFFSET,
+            MAP_Y,
+            RGB::named(PURPLE_COLOR),
+            RGB::named(BASE_BG_COLOR),
+            &exp_message,
+        );
+
+        ctx.draw_bar_horizontal(
+            EXPBAR_OFFSET,
+            MAP_Y,
+            10,
+            stats.exp,
+            100,
+            RGB::named(PURPLE_COLOR),
             RGB::named(BASE_BG_COLOR),
         );
     }
@@ -172,19 +191,20 @@ pub fn show_character(gs: &mut State, ctx: &mut BTerm) -> CharacterMenuResult {
     let combat_stats = gs.ecs.read_storage::<CombatStats>();
     let names = gs.ecs.read_storage::<Name>();
 
-    let y: i32 = 23;
+    let stat_count: i32 = 6;
+    let y = (25 - (stat_count / 2)) as i32;
 
     ctx.draw_box(
         15,
         y - 2,
         31,
-        7,
+        stat_count + 3,
         RGB::named(WHITE_COLOR),
         RGB::named(BASE_BG_COLOR),
     );
     ctx.print_color(
         17,
-        y + 4 as i32 + 1,
+        y + stat_count as i32 + 1,
         RGB::named(RED_COLOR),
         RGB::named(BASE_BG_COLOR),
         "Esc to close",
@@ -198,10 +218,11 @@ pub fn show_character(gs: &mut State, ctx: &mut BTerm) -> CharacterMenuResult {
             RGB::named(BASE_BG_COLOR),
             &name.name,
         );
-        ctx.print(17, y, format!("Strength {}", combat_stat.strength));
-        ctx.print(17, y + 1, format!("Agility {}", combat_stat.agility));
-        ctx.print(17, y + 2, format!("Vitality {}", combat_stat.vitality));
-        ctx.print(17, y + 3, format!("Magic {}", combat_stat.magic));
+        ctx.print(17, y, format!("Level {}", combat_stat.level));
+        ctx.print(17, y + 2, format!("Strength {}", combat_stat.strength));
+        ctx.print(17, y + 3, format!("Agility {}", combat_stat.agility));
+        ctx.print(17, y + 4, format!("Vitality {}", combat_stat.vitality));
+        ctx.print(17, y + 5, format!("Magic {}", combat_stat.magic));
     }
 
     match ctx.key {

@@ -9,6 +9,8 @@ pub struct BlocksTile {}
 pub struct CombatStats {
     pub max_hp: i32,
     pub hp: i32,
+    pub level: i32,
+    pub exp: i32,
     pub strength: i32,
     pub agility: i32,
     pub vitality: i32,
