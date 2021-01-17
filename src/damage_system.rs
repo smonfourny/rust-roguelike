@@ -7,13 +7,35 @@ impl<'a> System<'a> for DamageSystem {
     type SystemData = (
         WriteStorage<'a, CombatStats>,
         WriteStorage<'a, SufferDamage>,
+        ReadExpect<'a, Entity>,
+        WriteExpect<'a, GameLog>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut stats, mut damage) = data;
+        let (mut stats, mut damage, player, mut gamelog) = data;
+
+        let mut exp_gain = 0;
 
         for (mut stats, damage) in (&mut stats, &damage).join() {
             stats.hp -= damage.amount.iter().sum::<i32>();
+
+            if stats.hp < 1 {
+                // TODO separate this, as this is likely not the right place to do this
+                exp_gain += 120 * stats.level;
+            }
+        }
+
+        // TODO separate this, as this is likely not the right place to do this
+        if let Some(player_stats) = stats.get_mut(*player) {
+            let mut new_exp = player_stats.exp + exp_gain;
+            while new_exp >= 100 * player_stats.level {
+                new_exp -= 100 * player_stats.level;
+                player_stats.level += 1;
+                gamelog
+                    .entries
+                    .push(format!("You reached level {}!", player_stats.level));
+            }
+            player_stats.exp = new_exp;
         }
 
         damage.clear();

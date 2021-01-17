@@ -18,10 +18,10 @@ pub static WHITE_COLOR: (u8, u8, u8) = (251, 241, 199);
 
 pub static MAP_X: i32 = 80;
 pub static MAP_Y: i32 = 43;
-pub static HEALTH_OFFSET: i32 = 30;
+pub static HEALTH_OFFSET: i32 = 28;
 pub static HEALTHBAR_OFFSET: i32 = HEALTH_OFFSET + 12;
 pub static EXP_OFFSET: i32 = HEALTHBAR_OFFSET + 14;
-pub static EXPBAR_OFFSET: i32 = EXP_OFFSET + 12;
+pub static EXPBAR_OFFSET: i32 = EXP_OFFSET + 14;
 pub static LOG_OFFSET: i32 = 2;
 
 pub static MAX_MONSTERS_PER_ROOM: i32 = 4;

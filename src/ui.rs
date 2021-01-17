@@ -47,7 +47,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
             RGB::named(BASE_BG_COLOR),
         );
 
-        let exp_message = format!(" EXP: {}/{}", stats.exp, 100);
+        let exp_message = format!(" EXP: {}/{}", stats.exp, stats.level * 100);
         ctx.print_color(
             EXP_OFFSET,
             MAP_Y,
@@ -61,7 +61,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
             MAP_Y,
             10,
             stats.exp,
-            100,
+            stats.level * 100,
             RGB::named(PURPLE_COLOR),
             RGB::named(BASE_BG_COLOR),
         );
