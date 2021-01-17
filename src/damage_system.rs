@@ -8,20 +8,26 @@ impl<'a> System<'a> for DamageSystem {
         WriteStorage<'a, CombatStats>,
         WriteStorage<'a, SufferDamage>,
         ReadExpect<'a, Entity>,
+        Entities<'a>,
+        ReadStorage<'a, Player>,
         WriteExpect<'a, GameLog>,
         WriteExpect<'a, RandomNumberGenerator>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut stats, mut damage, player, mut gamelog, mut rng) = data;
+        let (mut stats, mut damage, player, entities, players, mut gamelog, mut rng) = data;
 
         let mut exp_gain = 0;
 
-        for (mut stats, damage) in (&mut stats, &damage).join() {
+        for (mut stats, damage, entity) in (&mut stats, &damage, &entities).join() {
             stats.hp -= damage.amount.iter().sum::<i32>();
 
             if stats.hp < 1 {
-                exp_gain += 15 * stats.level;
+                let player = players.get(entity);
+                match player {
+                    None => { exp_gain += 15 * stats.level; },
+                    Some(_) => {}
+                }
             }
         }
 
