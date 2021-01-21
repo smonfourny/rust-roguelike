@@ -1,6 +1,6 @@
 use super::{
-    gamelog::GameLog, CombatStats, Consumable, HealEffect, InBackpack, Name, Position, WantsToUseItem,
-    WantsToDropItem, WantsToPickupItem,
+    gamelog::GameLog, CombatStats, Consumable, HealEffect, InBackpack, InflictsDamage, Map, Name, Position, SufferDamage, WantsToUseItem,
+    WantsToDropItem, WantsToPickupItem, 
 };
 use specs::prelude::*;
 
@@ -49,24 +49,30 @@ impl<'a> System<'a> for ItemUseSystem {
     type SystemData = (
         ReadExpect<'a, Entity>,
         WriteExpect<'a, GameLog>,
+        ReadExpect<'a, Map>,
         Entities<'a>,
         WriteStorage<'a, WantsToUseItem>,
         ReadStorage<'a, Name>,
         ReadStorage<'a, HealEffect>,
+        ReadStorage<'a, InflictsDamage>,
         WriteStorage<'a, CombatStats>,
-        ReadStorage<'a, Consumable>
+        ReadStorage<'a, Consumable>,
+        WriteStorage<'a, SufferDamage>
     );
 
     fn run(&mut self, data: Self::SystemData) {
         let (
             player_entity,
             mut gamelog,
+            map,
             entities,
             mut wants_use_item,
             names,
             heal_effects,
+            inflict_damage,
             mut combat_stats,
-            consumables
+            consumables,
+            mut suffer_damage
         ) = data;
 
         for (entity, useitem, stats) in (&entities, &wants_use_item, &mut combat_stats).join() {
@@ -90,7 +96,23 @@ impl<'a> System<'a> for ItemUseSystem {
                             eff.amount
                         ));
                     }
-                    entities.delete(useitem.item).expect("Delete failed");
+                }
+            }
+
+            let damage_effect = inflict_damage.get(useitem.item);
+            match damage_effect {
+                None => {},
+                Some(damage) => {
+                    // TODO use pattern matching here
+                    let target_point = useitem.target.unwrap();
+                    for mob in map.tile_content[target_point.x as usize][target_point.y as usize].iter() {
+                        SufferDamage::new_damage(&mut suffer_damage, *mob, damage.damage);
+                        if entity == *player_entity {
+                            let mob_name = names.get(*mob).unwrap();
+                            let item_name = names.get(useitem.item).unwrap();
+                            gamelog.entries.push(format!("You use {} on {}, inflicting {} damage", item_name.name, mob_name.name, damage.damage));
+                        }
+                    }
                 }
             }
         }

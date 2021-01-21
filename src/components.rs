@@ -115,4 +115,5 @@ pub struct WantsToPickupItem {
 #[derive(Component, Debug, Clone)]
 pub struct WantsToUseItem {
     pub item: Entity,
+    pub target: Option<Point>
 }
