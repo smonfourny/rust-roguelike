@@ -64,8 +64,8 @@ impl State {
         pickup.run_now(&self.ecs);
         let mut item_listing = ItemListingSystem {};
         item_listing.run_now(&self.ecs);
-        let mut potions = PotionUseSystem {};
-        potions.run_now(&self.ecs);
+        let mut items = ItemUseSystem {};
+        items.run_now(&self.ecs);
         let mut drop = ItemDropSystem {};
         drop.run_now(&self.ecs);
 
@@ -127,11 +127,11 @@ impl GameState for State {
                     (ui::ItemMenuResult::Cancel, _) => new_runstate = RunState::AwaitingInput,
                     (ui::ItemMenuResult::NoResponse, _) | (ui::ItemMenuResult::Selected, None) => {}
                     (ui::ItemMenuResult::Selected, Some(entity)) => {
-                        let mut intent = self.ecs.write_storage::<WantsToDrinkPotion>();
+                        let mut intent = self.ecs.write_storage::<WantsToUseItem>();
                         intent
                             .insert(
                                 *self.ecs.fetch::<Entity>(),
-                                WantsToDrinkPotion { potion: entity },
+                                WantsToUseItem { item: entity },
                             )
                             .expect("Unable to insert intent");
                         new_runstate = RunState::PlayerTurn;
@@ -179,21 +179,24 @@ fn main() -> BError {
     let mut gs = State { ecs: World::new() };
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
+    gs.ecs.register::<Consumable>();
     gs.ecs.register::<HealEffect>();
     gs.ecs.register::<InBackpack>();
+    gs.ecs.register::<InflictsDamage>();
     gs.ecs.register::<Item>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
     gs.ecs.register::<Player>();
     gs.ecs.register::<Position>();
+    gs.ecs.register::<Ranged>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<WantsToDisplayContent>();
-    gs.ecs.register::<WantsToDrinkPotion>();
     gs.ecs.register::<WantsToDropItem>();
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.register::<WantsToPickupItem>();
+    gs.ecs.register::<WantsToUseItem>();
 
     gs.ecs.insert(RandomNumberGenerator::new());
 

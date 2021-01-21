@@ -1,6 +1,6 @@
 use super::{
-    BlocksTile, CombatStats, HealEffect, Item, Monster, Name, Player, Position, Rect, Renderable,
-    Viewshed, BASE_BG_COLOR, BROWN_SHIRT_COLOR, MAX_ITEMS_PER_ROOM, MAX_MONSTERS_PER_ROOM,
+    BlocksTile, CombatStats, Consumable, HealEffect, InflictsDamage, Item, Monster, Name, Player, Position, Ranged, Rect, Renderable,
+    Viewshed, BASE_BG_COLOR, BROWN_SHIRT_COLOR, CYAN_COLOR, MAX_ITEMS_PER_ROOM, MAX_MONSTERS_PER_ROOM,
     PLAYER_COLOR, PURPLE_COLOR,
 };
 use bracket_lib::prelude::*;
@@ -78,7 +78,7 @@ pub fn spawn_room_contents(ecs: &mut World, room: &Rect) {
     }
 
     for (x, y) in item_spawn_points.iter() {
-        health_potion(ecs, *x as i32, *y as i32);
+        random_item(ecs, *x as i32, *y as i32);
     }
 }
 
@@ -92,6 +92,19 @@ fn random_monster(ecs: &mut World, x: i32, y: i32) {
     match result {
         1 => skeleton(ecs, x, y),
         _ => goblin(ecs, x, y),
+    };
+}
+
+fn random_item(ecs: &mut World, x: i32, y: i32) {
+    let result;
+    {
+        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
+        result = rng.roll_dice(1, 2);
+    }
+
+    match result {
+        1 => health_potion(ecs, x, y),
+        _ => magic_missile_scroll(ecs, x, y),
     };
 }
 
@@ -147,6 +160,26 @@ fn health_potion(ecs: &mut World, x: i32, y: i32) {
             name: "Health Potion".to_string(),
         })
         .with(Item {})
+        .with(Consumable {})
         .with(HealEffect { amount: 8 })
+        .build();
+}
+
+fn magic_missile_scroll(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: to_cp437(')'),
+            fg: RGB::named(CYAN_COLOR),
+            bg: RGB::named(BASE_BG_COLOR),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Magic Missile Scroll".to_string(),
+        })
+        .with(Item {})
+        .with(Consumable {})
+        .with(Ranged{ range: 6 })
+        .with(InflictsDamage{ damage: 8 })
         .build();
 }

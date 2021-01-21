@@ -18,6 +18,9 @@ pub struct CombatStats {
 }
 
 #[derive(Component, Debug)]
+pub struct Consumable {}
+
+#[derive(Component, Debug)]
 pub struct HealEffect {
     pub amount: i32,
 }
@@ -25,6 +28,11 @@ pub struct HealEffect {
 #[derive(Component, Debug, Clone)]
 pub struct InBackpack {
     pub owner: Entity,
+}
+
+#[derive(Component, Debug)]
+pub struct InflictsDamage {
+    pub damage: i32
 }
 
 #[derive(Component, Debug)]
@@ -45,6 +53,11 @@ pub struct Player {}
 pub struct Position {
     pub x: i32,
     pub y: i32,
+}
+
+#[derive(Component)]
+pub struct Ranged {
+    pub range: i32
 }
 
 #[derive(Component)]
@@ -84,11 +97,6 @@ pub struct Viewshed {
 pub struct WantsToDisplayContent {}
 
 #[derive(Component, Debug, Clone)]
-pub struct WantsToDrinkPotion {
-    pub potion: Entity,
-}
-
-#[derive(Component, Debug, Clone)]
 pub struct WantsToDropItem {
     pub item: Entity,
 }
@@ -101,5 +109,10 @@ pub struct WantsToMelee {
 #[derive(Component, Debug, Clone)]
 pub struct WantsToPickupItem {
     pub collected_by: Entity,
+    pub item: Entity,
+}
+
+#[derive(Component, Debug, Clone)]
+pub struct WantsToUseItem {
     pub item: Entity,
 }
