@@ -1,7 +1,7 @@
 use super::{
-    BlocksTile, CombatStats, Consumable, HealEffect, InflictsDamage, Item, Monster, Name, Player, Position, Ranged, Rect, Renderable,
-    Viewshed, BASE_BG_COLOR, BROWN_SHIRT_COLOR, CYAN_COLOR, MAX_ITEMS_PER_ROOM, MAX_MONSTERS_PER_ROOM,
-    PLAYER_COLOR, PURPLE_COLOR,
+    BlocksTile, CombatStats, Consumable, HealEffect, InflictsDamage, Item, Monster, Name, Player,
+    Position, Ranged, Rect, Renderable, Viewshed, BASE_BG_COLOR, BROWN_SHIRT_COLOR, CYAN_COLOR,
+    MAX_ITEMS_PER_ROOM, MAX_MONSTERS_PER_ROOM, PLAYER_COLOR, PURPLE_COLOR,
 };
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -179,7 +179,7 @@ fn magic_missile_scroll(ecs: &mut World, x: i32, y: i32) {
         })
         .with(Item {})
         .with(Consumable {})
-        .with(Ranged{ range: 6 })
-        .with(InflictsDamage{ damage: 8 })
+        .with(Ranged { range: 6 })
+        .with(InflictsDamage { damage: 8 })
         .build();
 }

@@ -1,6 +1,6 @@
 use super::{
-    gamelog::GameLog, CombatStats, Consumable, HealEffect, InBackpack, InflictsDamage, Map, Name, Position, SufferDamage, WantsToUseItem,
-    WantsToDropItem, WantsToPickupItem, 
+    gamelog::GameLog, CombatStats, Consumable, HealEffect, InBackpack, InflictsDamage, Map, Name,
+    Position, SufferDamage, WantsToDropItem, WantsToPickupItem, WantsToUseItem,
 };
 use specs::prelude::*;
 
@@ -57,7 +57,7 @@ impl<'a> System<'a> for ItemUseSystem {
         ReadStorage<'a, InflictsDamage>,
         WriteStorage<'a, CombatStats>,
         ReadStorage<'a, Consumable>,
-        WriteStorage<'a, SufferDamage>
+        WriteStorage<'a, SufferDamage>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -72,13 +72,13 @@ impl<'a> System<'a> for ItemUseSystem {
             inflict_damage,
             mut combat_stats,
             consumables,
-            mut suffer_damage
+            mut suffer_damage,
         ) = data;
 
         for (entity, useitem, stats) in (&entities, &wants_use_item, &mut combat_stats).join() {
             let consumable = consumables.get(useitem.item);
             match consumable {
-                None => {},
+                None => {}
                 Some(_) => {
                     entities.delete(useitem.item).expect("Delete failed");
                 }
@@ -101,16 +101,21 @@ impl<'a> System<'a> for ItemUseSystem {
 
             let damage_effect = inflict_damage.get(useitem.item);
             match damage_effect {
-                None => {},
+                None => {}
                 Some(damage) => {
                     // TODO use pattern matching here
                     let target_point = useitem.target.unwrap();
-                    for mob in map.tile_content[target_point.x as usize][target_point.y as usize].iter() {
+                    for mob in
+                        map.tile_content[target_point.x as usize][target_point.y as usize].iter()
+                    {
                         SufferDamage::new_damage(&mut suffer_damage, *mob, damage.damage);
                         if entity == *player_entity {
                             let mob_name = names.get(*mob).unwrap();
                             let item_name = names.get(useitem.item).unwrap();
-                            gamelog.entries.push(format!("You use {} on {}, inflicting {} damage", item_name.name, mob_name.name, damage.damage));
+                            gamelog.entries.push(format!(
+                                "You use {} on {}, inflicting {} damage",
+                                item_name.name, mob_name.name, damage.damage
+                            ));
                         }
                     }
                 }

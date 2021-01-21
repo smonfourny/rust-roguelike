@@ -32,7 +32,7 @@ pub struct InBackpack {
 
 #[derive(Component, Debug)]
 pub struct InflictsDamage {
-    pub damage: i32
+    pub damage: i32,
 }
 
 #[derive(Component, Debug)]
@@ -57,7 +57,7 @@ pub struct Position {
 
 #[derive(Component)]
 pub struct Ranged {
-    pub range: i32
+    pub range: i32,
 }
 
 #[derive(Component)]
@@ -115,5 +115,5 @@ pub struct WantsToPickupItem {
 #[derive(Component, Debug, Clone)]
 pub struct WantsToUseItem {
     pub item: Entity,
-    pub target: Option<Point>
+    pub target: Option<Point>,
 }

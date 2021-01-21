@@ -1,7 +1,7 @@
 use super::{
     CombatStats, GameLog, InBackpack, Name, Player, State, Viewshed, BASE_BG_COLOR, CYAN_COLOR,
-    EXPBAR_OFFSET, EXP_OFFSET, HEALTHBAR_OFFSET, HEALTH_OFFSET, LOG_OFFSET, MAP_X, MAP_Y,
-    GREEN_COLOR, ORANGE_COLOR, PURPLE_COLOR, RED_COLOR, WHITE_COLOR, YELLOW_COLOR,
+    EXPBAR_OFFSET, EXP_OFFSET, GREEN_COLOR, HEALTHBAR_OFFSET, HEALTH_OFFSET, LOG_OFFSET, MAP_X,
+    MAP_Y, ORANGE_COLOR, PURPLE_COLOR, RED_COLOR, WHITE_COLOR, YELLOW_COLOR,
 };
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -234,12 +234,22 @@ pub fn show_character(gs: &mut State, ctx: &mut BTerm) -> CharacterMenuResult {
     }
 }
 
-pub fn ranged_target(gs: &mut State, ctx: &mut BTerm, range: i32) -> (ItemMenuResult, Option<Point>) {
+pub fn ranged_target(
+    gs: &mut State,
+    ctx: &mut BTerm,
+    range: i32,
+) -> (ItemMenuResult, Option<Point>) {
     let player_entity = gs.ecs.fetch::<Entity>();
     let player_pos = gs.ecs.fetch::<Point>();
     let viewsheds = gs.ecs.read_storage::<Viewshed>();
 
-    ctx.print_color(5, 0, RGB::named(ORANGE_COLOR), RGB::named(BASE_BG_COLOR), "Select Target:");
+    ctx.print_color(
+        5,
+        0,
+        RGB::named(ORANGE_COLOR),
+        RGB::named(BASE_BG_COLOR),
+        "Select Target:",
+    );
 
     // Highlight target cells
     let mut available_cells = Vec::new();
@@ -266,7 +276,10 @@ pub fn ranged_target(gs: &mut State, ctx: &mut BTerm, range: i32) -> (ItemMenuRe
     if valid_target {
         ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(GREEN_COLOR));
         if ctx.left_click {
-            return (ItemMenuResult::Selected, Some(Point::new(mouse_pos.0, mouse_pos.1)));
+            return (
+                ItemMenuResult::Selected,
+                Some(Point::new(mouse_pos.0, mouse_pos.1)),
+            );
         }
     } else {
         ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(RED_COLOR));
