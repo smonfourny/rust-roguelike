@@ -1,6 +1,6 @@
 use super::{
-    gamelog::GameLog, CombatStats, HealEffect, InBackpack, Name, Position, WantsToDrinkPotion,
-    WantsToDropItem, WantsToPickupItem,
+    gamelog::GameLog, CombatStats, Consumable, HealEffect, InBackpack, InflictsDamage, Map, Name,
+    Position, SufferDamage, WantsToDropItem, WantsToPickupItem, WantsToUseItem,
 };
 use specs::prelude::*;
 
@@ -43,49 +43,86 @@ impl<'a> System<'a> for ItemCollectionSystem {
     }
 }
 
-pub struct PotionUseSystem {}
+pub struct ItemUseSystem {}
 
-impl<'a> System<'a> for PotionUseSystem {
+impl<'a> System<'a> for ItemUseSystem {
     type SystemData = (
         ReadExpect<'a, Entity>,
         WriteExpect<'a, GameLog>,
+        ReadExpect<'a, Map>,
         Entities<'a>,
-        WriteStorage<'a, WantsToDrinkPotion>,
+        WriteStorage<'a, WantsToUseItem>,
         ReadStorage<'a, Name>,
         ReadStorage<'a, HealEffect>,
+        ReadStorage<'a, InflictsDamage>,
         WriteStorage<'a, CombatStats>,
+        ReadStorage<'a, Consumable>,
+        WriteStorage<'a, SufferDamage>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
         let (
             player_entity,
             mut gamelog,
+            map,
             entities,
-            mut wants_drink,
+            mut wants_use_item,
             names,
-            effects,
+            heal_effects,
+            inflict_damage,
             mut combat_stats,
+            consumables,
+            mut suffer_damage,
         ) = data;
 
-        for (entity, drink, stats) in (&entities, &wants_drink, &mut combat_stats).join() {
-            let effect = effects.get(drink.potion);
-            match effect {
+        for (entity, useitem, stats) in (&entities, &wants_use_item, &mut combat_stats).join() {
+            let consumable = consumables.get(useitem.item);
+            match consumable {
+                None => {}
+                Some(_) => {
+                    entities.delete(useitem.item).expect("Delete failed");
+                }
+            }
+
+            let heal_effect = heal_effects.get(useitem.item);
+            match heal_effect {
                 None => {}
                 Some(eff) => {
                     stats.hp = i32::min(stats.max_hp, stats.hp + eff.amount);
                     if entity == *player_entity {
                         gamelog.entries.push(format!(
-                            "You drink the {}, healing {} hp.",
-                            names.get(drink.potion).unwrap().name,
+                            "You use the {}, healing {} hp.",
+                            names.get(useitem.item).unwrap().name,
                             eff.amount
                         ));
                     }
-                    entities.delete(drink.potion).expect("Delete failed");
+                }
+            }
+
+            let damage_effect = inflict_damage.get(useitem.item);
+            match damage_effect {
+                None => {}
+                Some(damage) => {
+                    // TODO use pattern matching here
+                    let target_point = useitem.target.unwrap();
+                    for mob in
+                        map.tile_content[target_point.x as usize][target_point.y as usize].iter()
+                    {
+                        SufferDamage::new_damage(&mut suffer_damage, *mob, damage.damage);
+                        if entity == *player_entity {
+                            let mob_name = names.get(*mob).unwrap();
+                            let item_name = names.get(useitem.item).unwrap();
+                            gamelog.entries.push(format!(
+                                "You use {} on {}, inflicting {} damage",
+                                item_name.name, mob_name.name, damage.damage
+                            ));
+                        }
+                    }
                 }
             }
         }
 
-        wants_drink.clear();
+        wants_use_item.clear();
     }
 }
 

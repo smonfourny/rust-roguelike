@@ -25,7 +25,9 @@ impl<'a> System<'a> for DamageSystem {
             if stats.hp < 1 {
                 let player = players.get(entity);
                 match player {
-                    None => { exp_gain += 15 * stats.level; },
+                    None => {
+                        exp_gain += 15 * stats.level;
+                    }
                     Some(_) => {}
                 }
             }

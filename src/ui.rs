@@ -1,7 +1,7 @@
 use super::{
-    CombatStats, GameLog, InBackpack, Name, Player, State, BASE_BG_COLOR, CYAN_COLOR,
-    EXPBAR_OFFSET, EXP_OFFSET, HEALTHBAR_OFFSET, HEALTH_OFFSET, LOG_OFFSET, MAP_X, MAP_Y,
-    ORANGE_COLOR, PURPLE_COLOR, RED_COLOR, WHITE_COLOR, YELLOW_COLOR,
+    CombatStats, GameLog, InBackpack, Name, Player, State, Viewshed, BASE_BG_COLOR, CYAN_COLOR,
+    EXPBAR_OFFSET, EXP_OFFSET, GREEN_COLOR, HEALTHBAR_OFFSET, HEALTH_OFFSET, LOG_OFFSET, MAP_X,
+    MAP_Y, ORANGE_COLOR, PURPLE_COLOR, RED_COLOR, WHITE_COLOR, YELLOW_COLOR,
 };
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -232,4 +232,61 @@ pub fn show_character(gs: &mut State, ctx: &mut BTerm) -> CharacterMenuResult {
             _ => CharacterMenuResult::NoResponse,
         },
     }
+}
+
+pub fn ranged_target(
+    gs: &mut State,
+    ctx: &mut BTerm,
+    range: i32,
+) -> (ItemMenuResult, Option<Point>) {
+    let player_entity = gs.ecs.fetch::<Entity>();
+    let player_pos = gs.ecs.fetch::<Point>();
+    let viewsheds = gs.ecs.read_storage::<Viewshed>();
+
+    ctx.print_color(
+        5,
+        0,
+        RGB::named(ORANGE_COLOR),
+        RGB::named(BASE_BG_COLOR),
+        "Select Target:",
+    );
+
+    // Highlight target cells
+    let mut available_cells = Vec::new();
+    let visible = viewsheds.get(*player_entity);
+    if let Some(visible) = visible {
+        for point in visible.visible_tiles.iter() {
+            let distance = DistanceAlg::Pythagoras.distance2d(*player_pos, *point);
+            if distance <= range as f32 {
+                ctx.set_bg(point.x, point.y, RGB::named(YELLOW_COLOR));
+                available_cells.push(point);
+            }
+        }
+    } else {
+        return (ItemMenuResult::Cancel, None);
+    }
+
+    let mouse_pos = ctx.mouse_pos();
+    let mut valid_target = false;
+    for pos in available_cells.iter() {
+        if pos.x == mouse_pos.0 && pos.y == mouse_pos.1 {
+            valid_target = true;
+        }
+    }
+    if valid_target {
+        ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(GREEN_COLOR));
+        if ctx.left_click {
+            return (
+                ItemMenuResult::Selected,
+                Some(Point::new(mouse_pos.0, mouse_pos.1)),
+            );
+        }
+    } else {
+        ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(RED_COLOR));
+        if ctx.left_click {
+            return (ItemMenuResult::Cancel, None);
+        }
+    }
+
+    (ItemMenuResult::NoResponse, None)
 }
